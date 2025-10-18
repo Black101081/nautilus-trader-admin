@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 import Demo from "./pages/Demo";
 import Docs from "./pages/Docs";
 import StrategyBuilder from "./pages/StrategyBuilder";
@@ -12,20 +13,23 @@ import Reports from "./pages/Reports";
 import AdminDashboard from "./pages/AdminDashboard";
 import TraderDashboard from "./pages/TraderDashboard";
 import LiveTrading from "./pages/LiveTrading";
+import LiveTradingNew from "./pages/LiveTradingNew";
 import AdvancedBacktest from "./pages/AdvancedBacktest";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      <Route path={"/"} component={Dashboard} />
+      <Route path={"/home"} component={Home} />
       <Route path={"/demo"} component={Demo} />
       <Route path={"/strategies"} component={StrategyBuilder} />
       <Route path={"/reports"} component={Reports} />
       <Route path={"/docs"} component={Docs} />
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/trader"} component={TraderDashboard} />
-      <Route path={"/live"} component={LiveTrading} />
+      <Route path={"/live"} component={LiveTradingNew} />
+      <Route path={"/live-old"} component={LiveTrading} />
       <Route path={"/advanced-backtest"} component={AdvancedBacktest} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
