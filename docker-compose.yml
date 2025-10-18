@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Nautilus Core data storage
+  postgres:
+    image: postgres:14-alpine
+    container_name: nautilus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nautilus
+      POSTGRES_USER: nautilus_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nautilus_pass}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nautilus_user -d nautilus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - nautilus-network
+
+  # Redis - Cache and live trading state
+  redis:
+    image: redis:7-alpine
+    container_name: nautilus-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-nautilus_redis}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - nautilus-network
+
+  # MySQL - Web interface data (alternative to TiDB)
+  mysql:
+    image: mysql:8.0
+    container_name: nautilus-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: nautilus_web
+      MYSQL_USER: nautilus_web
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-nautilus_web_pass}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/init-mysql.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "nautilus_web", "-p${MYSQL_PASSWORD:-nautilus_web_pass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - nautilus-network
+
+  # Web Application - Nautilus Trader Admin Interface
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nautilus-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      # Node environment
+      NODE_ENV: production
+      
+      # Database connections
+      DATABASE_URL: mysql://nautilus_web:${MYSQL_PASSWORD:-nautilus_web_pass}@mysql:3306/nautilus_web
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: nautilus
+      POSTGRES_USER: nautilus_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nautilus_pass}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-nautilus_redis}
+      
+      # Nautilus configuration
+      NAUTILUS_DATA_DIR: /app/nautilus-data
+      
+      # Application settings
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    volumes:
+      - nautilus_data:/app/nautilus-data
+      - ./logs:/app/logs
+    networks:
+      - nautilus-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mysql_data:
+    driver: local
+  nautilus_data:
+    driver: local
+
+networks:
+  nautilus-network:
+    driver: bridge
+

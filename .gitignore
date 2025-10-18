@@ -105,3 +105,17 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Docker
+.env
+docker-compose.override.yml
+
+# Logs
+logs/
+*.log
+
+# Backups
+backups/
+
+# Nautilus data
+nautilus-data/

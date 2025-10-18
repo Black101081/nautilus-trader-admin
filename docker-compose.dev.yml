@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - Development
+  postgres:
+    image: postgres:14-alpine
+    container_name: nautilus-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nautilus
+      POSTGRES_USER: nautilus_user
+      POSTGRES_PASSWORD: nautilus_pass
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./docker/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nautilus_user -d nautilus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nautilus-dev-network
+
+  # Redis - Development
+  redis:
+    image: redis:7-alpine
+    container_name: nautilus-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nautilus-dev-network
+
+  # MySQL - Development
+  mysql:
+    image: mysql:8.0
+    container_name: nautilus-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nautilus_web
+      MYSQL_USER: nautilus_web
+      MYSQL_PASSWORD: nautilus_web_pass
+    ports:
+      - "3307:3306"  # Different port to avoid conflicts
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./docker/init-mysql.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "nautilus_web", "-pnautilus_web_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nautilus-dev-network
+
+  # Web Application - Development with hot-reload
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nautilus-web-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: mysql://nautilus_web:nautilus_web_pass@mysql:3306/nautilus_web
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: nautilus
+      POSTGRES_USER: nautilus_user
+      POSTGRES_PASSWORD: nautilus_pass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NAUTILUS_DATA_DIR: /app/nautilus-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    volumes:
+      # Mount source code for hot-reload
+      - ./client:/app/client
+      - ./server:/app/server
+      - ./public:/app/public
+      - ./drizzle:/app/drizzle
+      - ./package.json:/app/package.json
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./drizzle.config.ts:/app/drizzle.config.ts
+      # Exclude node_modules from host
+      - /app/node_modules
+      # Data volumes
+      - nautilus_dev_data:/app/nautilus-data
+      - ./logs:/app/logs
+    networks:
+      - nautilus-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  mysql_dev_data:
+    driver: local
+  nautilus_dev_data:
+    driver: local
+
+networks:
+  nautilus-dev-network:
+    driver: bridge
+
