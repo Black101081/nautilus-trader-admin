@@ -1,4 +1,4 @@
-import { MainLayout } from "@/components/MainLayout";
+import { TraderLayout } from "@/components/TraderLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
@@ -71,7 +71,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <MainLayout>
+    <TraderLayout>
       {/* Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between py-4">
@@ -263,7 +263,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </TraderLayout>
   );
 }
 

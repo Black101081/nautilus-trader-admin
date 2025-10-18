@@ -1,4 +1,4 @@
-import { MainLayout } from "@/components/MainLayout";
+import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -87,7 +87,7 @@ export default function AdminSystem() {
   };
 
   return (
-    <MainLayout>
+    <AdminLayout>
       {/* Header */}
       <div className="border-b border-border/40 bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between py-4">
@@ -390,7 +390,7 @@ export default function AdminSystem() {
           </TabsContent>
         </Tabs>
       </div>
-    </MainLayout>
+    </AdminLayout>
   );
 }
 

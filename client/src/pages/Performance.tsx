@@ -1,10 +1,10 @@
-import { MainLayout } from "@/components/MainLayout";
+import { TraderLayout } from "@/components/TraderLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
 
 export default function Performance() {
   return (
-    <MainLayout>
+    <TraderLayout>
       <div className="border-b border-border/40 bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center py-4">
           <div className="flex items-center gap-2">
@@ -23,6 +23,6 @@ export default function Performance() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </TraderLayout>
   );
 }
