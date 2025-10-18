@@ -459,6 +459,48 @@ print(json.dumps(result))
       const { users } = await import("../drizzle/schema");
       return await db.select().from(users);
     }),
+    createUser: publicProcedure
+      .input(z.object({ name: z.string(), email: z.string(), role: z.enum(["user", "admin"]) }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const { users } = await import("../drizzle/schema");
+        const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await db.insert(users).values({
+          id: userId,
+          name: input.name,
+          email: input.email,
+          role: input.role,
+        });
+        return { success: true, id: userId };
+      }),
+    updateUser: publicProcedure
+      .input(z.object({ id: z.string(), name: z.string().optional(), email: z.string().optional(), role: z.enum(["user", "admin"]).optional() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const { users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        await db.update(users).set({
+          name: input.name,
+          email: input.email,
+          role: input.role,
+        }).where(eq(users.id, input.id));
+        return { success: true };
+      }),
+    deleteUser: publicProcedure
+      .input(z.object({ id: z.string() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        const { users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        await db.delete(users).where(eq(users.id, input.id));
+        return { success: true };
+      }),
   }),
 
   // Risk Management
