@@ -65,7 +65,8 @@ export default function RiskAnalysis() {
       return acc;
     }, {} as Record<string, number>);
 
-    const maxInstrumentExposure = Math.max(...Object.values(instrumentExposure), 0);
+    const exposureValues = Object.values(instrumentExposure) as number[];
+    const maxInstrumentExposure = exposureValues.length > 0 ? Math.max(...exposureValues) : 0;
     const concentrationPercent = totalExposure > 0 ? maxInstrumentExposure / totalExposure : 0;
     const concentrationUsage = maxConcentration > 0 ? (concentrationPercent / maxConcentration) * 100 : 0;
 
