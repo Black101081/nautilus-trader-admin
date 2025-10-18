@@ -351,6 +351,147 @@ print(json.dumps(result))
         return { id: backtestId };
       }),
   }),
+
+  // Admin routers
+  admin: router({
+    systemLogs: publicProcedure.query(async () => {
+      const { getSystemLogs } = await import("./db_helpers");
+      return await getSystemLogs({ limit: 100 });
+    }),
+
+    auditTrail: publicProcedure.query(async () => {
+      const { getAuditTrail } = await import("./db_helpers");
+      return await getAuditTrail({ limit: 100 });
+    }),
+
+    systemStats: publicProcedure.query(async () => {
+      const { getSystemStats } = await import("./db_helpers");
+      return await getSystemStats();
+    }),
+
+    allUsers: publicProcedure.query(async () => {
+      const { getDb } = await import("./db");
+      const db = await getDb();
+      if (!db) return [];
+      const { users } = await import("../drizzle/schema");
+      return await db.select().from(users);
+    }),
+  }),
+
+  // Risk Management
+  risk: router({
+    limits: publicProcedure.query(async () => {
+      const { getRiskLimits } = await import("./db_helpers");
+      return await getRiskLimits();
+    }),
+
+    createLimit: publicProcedure
+      .input(
+        z.object({
+          userId: z.string().optional(),
+          type: z.enum(["daily_loss", "position_size", "max_drawdown", "concentration"]),
+          value: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { createRiskLimit } = await import("./db_helpers");
+        return await createRiskLimit(input);
+      }),
+
+    updateLimit: publicProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          value: z.string().optional(),
+          enabled: z.enum(["yes", "no"]).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { updateRiskLimit } = await import("./db_helpers");
+        return await updateRiskLimit(input.id, {
+          value: input.value,
+          enabled: input.enabled,
+        });
+      }),
+  }),
+
+  // Live Trading
+  trading: router({
+    positions: publicProcedure.query(async () => {
+      const { getPositions } = await import("./db_helpers");
+      return await getPositions();
+    }),
+
+    liveTrades: publicProcedure.query(async () => {
+      const { getLiveTrades } = await import("./db_helpers");
+      return await getLiveTrades({ limit: 50 });
+    }),
+
+    openTrade: publicProcedure
+      .input(
+        z.object({
+          userId: z.string(),
+          strategyId: z.string().optional(),
+          symbol: z.string(),
+          side: z.enum(["buy", "sell"]),
+          quantity: z.string(),
+          entryPrice: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { createLiveTrade } = await import("./db_helpers");
+        return await createLiveTrade(input);
+      }),
+
+    closeTrade: publicProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          exitPrice: z.string(),
+          pnl: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { closeLiveTrade } = await import("./db_helpers");
+        return await closeLiveTrade(input.id, input.exitPrice, input.pnl);
+      }),
+  }),
+
+  // Performance Analytics
+  analytics: router({
+    metrics: publicProcedure
+      .input(
+        z.object({
+          userId: z.string().optional(),
+          strategyId: z.string().optional(),
+          period: z.enum(["daily", "weekly", "monthly", "all_time"]).optional(),
+        })
+      )
+      .query(async ({ input }) => {
+        const { getPerformanceMetrics } = await import("./db_helpers");
+        return await getPerformanceMetrics(input);
+      }),
+
+    createMetric: publicProcedure
+      .input(
+        z.object({
+          userId: z.string(),
+          strategyId: z.string().optional(),
+          period: z.enum(["daily", "weekly", "monthly", "all_time"]),
+          totalReturn: z.string().optional(),
+          sharpeRatio: z.string().optional(),
+          sortinoRatio: z.string().optional(),
+          maxDrawdown: z.string().optional(),
+          winRate: z.string().optional(),
+          profitFactor: z.string().optional(),
+          totalTrades: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { createPerformanceMetric } = await import("./db_helpers");
+        return await createPerformanceMetric(input);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

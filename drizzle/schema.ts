@@ -18,7 +18,110 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// Strategies table
+// System Logs for Admin Monitoring
+export const systemLogs = mysqlTable("system_logs", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  level: mysqlEnum("level", ["info", "warning", "error", "critical"]).notNull(),
+  category: varchar("category", { length: 64 }),
+  message: text("message").notNull(),
+  metadata: text("metadata"), // JSON string
+  userId: varchar("userId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+// Audit Trail for Compliance
+export const auditTrail = mysqlTable("audit_trail", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  action: varchar("action", { length: 128 }).notNull(),
+  resource: varchar("resource", { length: 128 }),
+  resourceId: varchar("resourceId", { length: 64 }),
+  details: text("details"), // JSON string
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+// API Keys for programmatic access
+export const apiKeys = mysqlTable("api_keys", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  keyHash: varchar("keyHash", { length: 128 }).notNull(),
+  permissions: text("permissions"), // JSON array
+  lastUsedAt: timestamp("lastUsedAt"),
+  expiresAt: timestamp("expiresAt"),
+  isActive: mysqlEnum("isActive", ["yes", "no"]).default("yes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+// Risk Limits
+export const riskLimits = mysqlTable("risk_limits", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }),
+  type: mysqlEnum("type", ["daily_loss", "position_size", "max_drawdown", "concentration"]).notNull(),
+  value: varchar("value", { length: 64 }).notNull(),
+  enabled: mysqlEnum("enabled", ["yes", "no"]).default("yes"),
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+// Live Trades
+export const liveTrades = mysqlTable("live_trades", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  strategyId: varchar("strategyId", { length: 64 }),
+  symbol: varchar("symbol", { length: 32 }).notNull(),
+  side: mysqlEnum("side", ["buy", "sell"]).notNull(),
+  quantity: varchar("quantity", { length: 64 }).notNull(),
+  entryPrice: varchar("entryPrice", { length: 64 }).notNull(),
+  exitPrice: varchar("exitPrice", { length: 64 }),
+  pnl: varchar("pnl", { length: 64 }),
+  status: mysqlEnum("status", ["open", "closed", "cancelled"]).default("open"),
+  entryTime: timestamp("entryTime").defaultNow(),
+  exitTime: timestamp("exitTime"),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+// Positions
+export const positions = mysqlTable("positions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  strategyId: varchar("strategyId", { length: 64 }),
+  symbol: varchar("symbol", { length: 32 }).notNull(),
+  quantity: varchar("quantity", { length: 64 }).notNull(),
+  avgPrice: varchar("avgPrice", { length: 64 }).notNull(),
+  currentPrice: varchar("currentPrice", { length: 64 }),
+  unrealizedPnl: varchar("unrealizedPnl", { length: 64 }),
+  realizedPnl: varchar("realizedPnl", { length: 64 }),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+// Performance Metrics
+export const performanceMetrics = mysqlTable("performance_metrics", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  strategyId: varchar("strategyId", { length: 64 }),
+  period: mysqlEnum("period", ["daily", "weekly", "monthly", "all_time"]).notNull(),
+  totalReturn: varchar("totalReturn", { length: 64 }),
+  sharpeRatio: varchar("sharpeRatio", { length: 64 }),
+  sortinoRatio: varchar("sortinoRatio", { length: 64 }),
+  maxDrawdown: varchar("maxDrawdown", { length: 64 }),
+  winRate: varchar("winRate", { length: 64 }),
+  profitFactor: varchar("profitFactor", { length: 64 }),
+  totalTrades: varchar("totalTrades", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow(),
+});
+
+export type SystemLog = typeof systemLogs.$inferSelect;
+export type AuditTrail = typeof auditTrail.$inferSelect;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type RiskLimit = typeof riskLimits.$inferSelect;
+export type LiveTrade = typeof liveTrades.$inferSelect;
+export type Position = typeof positions.$inferSelect;
+export type PerformanceMetric = typeof performanceMetrics.$inferSelect;
+
 export const strategies = mysqlTable("strategies", {
   id: varchar("id", { length: 64 }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),

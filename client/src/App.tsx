@@ -9,6 +9,8 @@ import Demo from "./pages/Demo";
 import Docs from "./pages/Docs";
 import StrategyBuilder from "./pages/StrategyBuilder";
 import Reports from "./pages/Reports";
+import AdminDashboard from "./pages/AdminDashboard";
+import TraderDashboard from "./pages/TraderDashboard";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -19,6 +21,8 @@ function Router() {
       <Route path={"/strategies"} component={StrategyBuilder} />
       <Route path={"/reports"} component={Reports} />
       <Route path={"/docs"} component={Docs} />
+      <Route path={"/admin"} component={AdminDashboard} />
+      <Route path={"/trader"} component={TraderDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

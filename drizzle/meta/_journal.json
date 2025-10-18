@@ -15,6 +15,13 @@
       "when": 1760774223345,
       "tag": "0001_hard_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1760775587670,
+      "tag": "0002_strong_boomerang",
+      "breakpoints": true
     }
   ]
 }
