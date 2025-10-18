@@ -4,20 +4,85 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Demo() {
   const [result, setResult] = useState<any>(null);
+  const [backtestId, setBacktestId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<string[]>([]);
+  
+  const utils = trpc.useUtils();
+  const { data: currentBacktest } = trpc.backtests.get.useQuery(
+    { id: backtestId! },
+    { enabled: !!backtestId, refetchInterval: 1000 }
+  );
+
+  const createBacktest = trpc.backtests.create.useMutation({
+    onSuccess: (data) => {
+      setBacktestId(data.id);
+      setLogs(["Backtest created, starting execution..."]);
+    },
+  });
+
+  const updateBacktest = trpc.backtests.update.useMutation();
+
   const runBacktest = trpc.nautilus.runBacktest.useMutation({
     onSuccess: (data) => {
       setResult(data);
+      setLogs(prev => [...prev, "Backtest completed!"]);
+      if (backtestId && (data as any).success) {
+        // Update backtest with results
+        updateBacktest.mutate({
+          id: backtestId,
+          status: "completed",
+          endingBalance: (data as any).starting_balance,
+          totalTrades: String((data as any).bars_count),
+          results: JSON.stringify(data),
+        });
+      }
+    },
+    onError: (error) => {
+      setLogs(prev => [...prev, `Error: ${error.message}`]);
+      if (backtestId) {
+        updateBacktest.mutate({
+          id: backtestId,
+          status: "failed",
+          error: error.message,
+        });
+      }
     },
   });
 
   const handleRunBacktest = () => {
     setResult(null);
-    runBacktest.mutate();
+    setLogs(["Initializing backtest..."]);
+    
+    // Create backtest record first
+    createBacktest.mutate({
+      strategyName: "Simple Demo Strategy",
+      instrument: "AUD/USD",
+      startingBalance: "100,000 USD",
+    });
+    
+    // Then run the actual backtest
+    setTimeout(() => {
+      setLogs(prev => [...prev, "Running backtest engine..."]);
+      runBacktest.mutate();
+    }, 500);
   };
+
+  useEffect(() => {
+    if (currentBacktest) {
+      if (currentBacktest.status === "completed" && currentBacktest.results) {
+        try {
+          const parsedResults = JSON.parse(currentBacktest.results);
+          setResult(parsedResults);
+        } catch (e) {
+          console.error("Failed to parse results", e);
+        }
+      }
+    }
+  }, [currentBacktest]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,6 +135,20 @@ export default function Demo() {
                   )}
                 </Button>
               </div>
+
+              {/* Logs */}
+              {logs.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold mb-2">Execution Logs</h4>
+                  <div className="p-4 rounded-lg bg-card border border-border/50 font-mono text-xs space-y-1 max-h-40 overflow-y-auto">
+                    {logs.map((log, i) => (
+                      <div key={i} className="text-muted-foreground">
+                        [{new Date().toLocaleTimeString()}] {log}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Results */}
               {result && (

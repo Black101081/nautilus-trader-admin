@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Demo from "./pages/Demo";
 import Docs from "./pages/Docs";
+import StrategyBuilder from "./pages/StrategyBuilder";
+import Reports from "./pages/Reports";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -14,6 +16,8 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/demo"} component={Demo} />
+      <Route path={"/strategies"} component={StrategyBuilder} />
+      <Route path={"/reports"} component={Reports} />
       <Route path={"/docs"} component={Docs} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

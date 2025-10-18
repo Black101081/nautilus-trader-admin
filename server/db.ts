@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, strategies, backtests, InsertStrategy, InsertBacktest } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -85,4 +85,72 @@ export async function getUser(id: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Strategy queries
+export async function createStrategy(strategy: InsertStrategy) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(strategies).values(strategy);
+}
+
+export async function getStrategies(userId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(strategies).where(eq(strategies.createdBy, userId));
+}
+
+export async function getStrategy(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(strategies).where(eq(strategies.id, id)).limit(1);
+  return result[0];
+}
+
+export async function updateStrategy(id: string, updates: Partial<InsertStrategy>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(strategies).set(updates).where(eq(strategies.id, id));
+}
+
+export async function deleteStrategy(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(strategies).where(eq(strategies.id, id));
+}
+
+// Backtest queries
+export async function createBacktest(backtest: InsertBacktest) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(backtests).values(backtest);
+}
+
+export async function getBacktests(userId: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(backtests).where(eq(backtests.createdBy, userId));
+}
+
+export async function getAllBacktests() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(backtests);
+}
+
+export async function getBacktest(id: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(backtests).where(eq(backtests.id, id)).limit(1);
+  return result[0];
+}
+
+export async function updateBacktest(id: string, updates: Partial<InsertBacktest>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(backtests).set(updates).where(eq(backtests.id, id));
+}
+
+export async function deleteBacktest(id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(backtests).where(eq(backtests.id, id));
+}

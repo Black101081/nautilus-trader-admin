@@ -8,6 +8,13 @@
       "when": 1760773518881,
       "tag": "0000_complex_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1760774223345,
+      "tag": "0001_hard_mad_thinker",
+      "breakpoints": true
     }
   ]
 }

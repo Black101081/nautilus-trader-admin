@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
-import { Activity, BarChart3, Code2, Rocket, TrendingUp, Zap } from "lucide-react";
+import { Activity, BarChart3, Code2, Rocket, TrendingUp, Zap, Database } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 export default function Home() {
@@ -62,19 +62,25 @@ export default function Home() {
               NautilusTrader is an open-source, high-performance algorithmic trading platform built with Rust and Python. 
               Backtest strategies with precision and deploy them to live markets seamlessly.
             </p>
-            <div className="flex gap-4 justify-center pt-4">
+            <div className="flex flex-wrap gap-4 justify-center pt-4">
               <Link href="/demo">
                 <Button size="lg" className="gap-2">
                   <Zap className="w-5 h-5" />
-                  Run Live Demo
+                  Run Demo
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" asChild>
-                <a href="https://github.com/nautechsystems/nautilus_trader" target="_blank" rel="noopener noreferrer">
-                  <Code2 className="w-5 h-5 mr-2" />
-                  View on GitHub
-                </a>
-              </Button>
+              <Link href="/strategies">
+                <Button size="lg" variant="outline" className="gap-2">
+                  <Code2 className="w-5 h-5" />
+                  Build Strategy
+                </Button>
+              </Link>
+              <Link href="/reports">
+                <Button size="lg" variant="outline" className="gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  View Reports
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
