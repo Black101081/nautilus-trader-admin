@@ -4,19 +4,20 @@ Provides functions to monitor and manage PostgreSQL database
 """
 
 import psycopg2
+import os
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 
 class PostgreSQLManager:
     """Manager class for PostgreSQL operations"""
     
-    def __init__(self, host='localhost', port=5432, user='nautilus_user', 
-                 password='nautilus_pass', database='nautilus'):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.database = database
+    def __init__(self, host=None, port=None, user=None, password=None, database=None):
+        # Use environment variables with fallback to defaults
+        self.host = host or os.getenv('POSTGRES_HOST', 'localhost')
+        self.port = port or int(os.getenv('POSTGRES_PORT', '5432'))
+        self.user = user or os.getenv('POSTGRES_USER', 'nautilus_user')
+        self.password = password or os.getenv('POSTGRES_PASSWORD', 'nautilus_pass')
+        self.database = database or os.getenv('POSTGRES_DB', 'nautilus')
         self._conn = None
     
     def _get_connection(self):

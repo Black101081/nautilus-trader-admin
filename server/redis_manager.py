@@ -4,15 +4,18 @@ Provides functions to monitor and manage Redis cache
 """
 
 import redis
+import os
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 
 class RedisManager:
     """Manager class for Redis operations"""
     
-    def __init__(self, host='localhost', port=6379, db=0):
-        self.host = host
-        self.port = port
+    def __init__(self, host=None, port=None, db=0, password=None):
+        # Use environment variables with fallback to defaults
+        self.host = host or os.getenv('REDIS_HOST', 'localhost')
+        self.port = port or int(os.getenv('REDIS_PORT', '6379'))
+        self.password = password or os.getenv('REDIS_PASSWORD', None)
         self.db = db
         self._client = None
     
@@ -23,6 +26,7 @@ class RedisManager:
                 host=self.host,
                 port=self.port,
                 db=self.db,
+                password=self.password,
                 decode_responses=True,
                 socket_timeout=5
             )
