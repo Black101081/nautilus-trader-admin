@@ -106,7 +106,9 @@ export default function Docs() {
               </CardHeader>
               <CardContent>
                 <div className="grid md:grid-cols-2 gap-6">
-                  {typeof indicators === 'object' && indicators && 'indicators' in indicators && Object.entries(indicators.indicators as Record<string, string[]>).map(([category, items]) => (
+                  {typeof indicators === 'object' && indicators && 'indicators' in indicators && (
+                    <>
+                      {Object.entries(indicators.indicators as Record<string, string[]>).map(([category, items]) => (
                     <div key={category}>
                       <h4 className="font-semibold mb-3 text-primary">{category}</h4>
                       <ul className="space-y-2">
@@ -119,6 +121,8 @@ export default function Docs() {
                       </ul>
                     </div>
                   ))}
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>

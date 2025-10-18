@@ -4,16 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Activity, DollarSign, Target, BarChart3 } from "lucide-react";
+import { 
+  TrendingUp, TrendingDown, Activity, DollarSign, Target, BarChart3,
+  Home, RefreshCw, Plus, Eye, Code2, PlayCircle, Shield
+} from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 
 export default function TraderDashboard() {
-  const { data: positions } = trpc.trading.positions.useQuery();
+  const { data: positions, refetch: refetchPositions } = trpc.trading.positions.useQuery();
   const { data: liveTrades } = trpc.trading.liveTrades.useQuery();
   const { data: riskLimits } = trpc.risk.limits.useQuery();
   const { data: metrics } = trpc.analytics.metrics.useQuery({});
+  const { data: strategies } = trpc.strategies.list.useQuery();
+  const { data: backtests } = trpc.backtests.list.useQuery();
 
-  // Calculate summary stats
+  // Calculate portfolio metrics
   const openPositions = positions?.length || 0;
   const totalUnrealizedPnL = positions?.reduce((sum, p) => {
     const pnl = parseFloat(p.unrealizedPnl || "0");
@@ -28,131 +34,211 @@ export default function TraderDashboard() {
     return sum + pnl;
   }, 0);
 
+  const winningTrades = closedTrades.filter(t => parseFloat(t.pnl || "0") > 0).length;
+  const winRate = closedTrades.length > 0 ? ((winningTrades / closedTrades.length) * 100).toFixed(1) : "0";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Trader Header */}
+      <header className="border-b border-border/40 bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">Trader Dashboard</h1>
-          </div>
           <div className="flex items-center gap-4">
-            <Link href="/strategies">
-              <Button variant="outline">Strategy Builder</Button>
-            </Link>
             <Link href="/">
-              <Button variant="outline">Home</Button>
+              <Button variant="ghost" size="sm">
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
             </Link>
+            <div className="h-8 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-green-500" />
+              <div>
+                <h1 className="text-sm font-bold">Trading Dashboard</h1>
+                <p className="text-xs text-muted-foreground">Portfolio & Strategy Management</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/strategies">
+              <Button variant="outline" size="sm">
+                <Code2 className="h-4 w-4 mr-2" />
+                Strategy Builder
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={() => refetchPositions()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="container py-8">
-        {/* Performance Overview */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Open Positions</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{openPositions}</div>
-              <p className="text-xs text-muted-foreground">Active positions</p>
-            </CardContent>
-          </Card>
+      <main className="container py-6">
+        {/* Portfolio Overview */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold">Portfolio Overview</h2>
+            <div className="flex gap-2">
+              <Link href="/demo">
+                <Button size="sm" variant="outline">
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Run Backtest
+                </Button>
+              </Link>
+            </div>
+          </div>
+          
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  ${(10000 + totalPnL + totalUnrealizedPnL).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Starting: $10,000.00
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Unrealized P&L</CardTitle>
-              {totalUnrealizedPnL >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-red-500" />
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${totalUnrealizedPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
-                ${totalUnrealizedPnL.toFixed(2)}
-              </div>
-              <p className="text-xs text-muted-foreground">From open positions</p>
-            </CardContent>
-          </Card>
+            <Card className={`border-l-4 ${totalPnL >= 0 ? "border-l-green-500" : "border-l-red-500"}`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Realized P&L</CardTitle>
+                {totalPnL >= 0 ? (
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-red-500" />
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-bold ${totalPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  ${totalPnL.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  From {closedTrades.length} closed trades
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Trades</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalTrades}</div>
-              <p className="text-xs text-muted-foreground">{closedTrades.length} closed</p>
-            </CardContent>
-          </Card>
+            <Card className={`border-l-4 ${totalUnrealizedPnL >= 0 ? "border-l-green-500" : "border-l-red-500"}`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Unrealized P&L</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-bold ${totalUnrealizedPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  ${totalUnrealizedPnL.toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {openPositions} open positions
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Realized P&L</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${totalPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
-                ${totalPnL.toFixed(2)}
-              </div>
-              <p className="text-xs text-muted-foreground">From closed trades</p>
-            </CardContent>
-          </Card>
+            <Card className="border-l-4 border-l-purple-500">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
+                <Target className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{winRate}%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {winningTrades} of {closedTrades.length} trades
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Main Content Tabs */}
+        {/* Main Trading Interface */}
         <Tabs defaultValue="positions" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="positions">Positions</TabsTrigger>
-            <TabsTrigger value="trades">Recent Trades</TabsTrigger>
-            <TabsTrigger value="risk">Risk Management</TabsTrigger>
-            <TabsTrigger value="analytics">Performance Analytics</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
+            <TabsTrigger value="positions" className="gap-2">
+              <Activity className="h-4 w-4" />
+              Positions
+            </TabsTrigger>
+            <TabsTrigger value="strategies" className="gap-2">
+              <Code2 className="h-4 w-4" />
+              Strategies
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Trade History
+            </TabsTrigger>
+            <TabsTrigger value="risk" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Risk Controls
+            </TabsTrigger>
           </TabsList>
 
           {/* Positions Tab */}
           <TabsContent value="positions" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Open Positions</CardTitle>
-                <CardDescription>Your current market positions</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Open Positions</CardTitle>
+                    <CardDescription>Monitor your current market exposure</CardDescription>
+                  </div>
+                  <Badge variant="outline" className="text-base px-3 py-1">
+                    {openPositions} Active
+                  </Badge>
+                </div>
               </CardHeader>
               <CardContent>
                 {!positions || positions.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No open positions
+                  <div className="text-center py-16">
+                    <Activity className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-semibold mb-2">No Open Positions</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Start trading by deploying a strategy or opening a manual position
+                    </p>
+                    <Link href="/strategies">
+                      <Button>
+                        <Code2 className="h-4 w-4 mr-2" />
+                        View Strategies
+                      </Button>
+                    </Link>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Symbol</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Avg Price</TableHead>
-                        <TableHead>Current Price</TableHead>
-                        <TableHead>Unrealized P&L</TableHead>
-                        <TableHead>Updated</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Avg Price</TableHead>
+                        <TableHead className="text-right">Current Price</TableHead>
+                        <TableHead className="text-right">P&L</TableHead>
+                        <TableHead className="text-right">P&L %</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {positions.map((position) => {
                         const pnl = parseFloat(position.unrealizedPnl || "0");
+                        const avgPrice = parseFloat(position.avgPrice);
+                        const currentPrice = parseFloat(position.currentPrice || position.avgPrice);
+                        const pnlPercent = ((currentPrice - avgPrice) / avgPrice * 100).toFixed(2);
+                        
                         return (
                           <TableRow key={position.id}>
-                            <TableCell className="font-medium">{position.symbol}</TableCell>
-                            <TableCell>{position.quantity}</TableCell>
-                            <TableCell>${position.avgPrice}</TableCell>
-                            <TableCell>${position.currentPrice || "N/A"}</TableCell>
-                            <TableCell className={pnl >= 0 ? "text-green-500" : "text-red-500"}>
+                            <TableCell className="font-bold">{position.symbol}</TableCell>
+                            <TableCell className="text-right font-mono">{position.quantity}</TableCell>
+                            <TableCell className="text-right font-mono">${avgPrice.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-mono">${currentPrice.toFixed(2)}</TableCell>
+                            <TableCell className={`text-right font-bold ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
                               ${pnl.toFixed(2)}
                             </TableCell>
-                            <TableCell>
-                              {position.updatedAt
-                                ? new Date(position.updatedAt).toLocaleString()
-                                : "N/A"}
+                            <TableCell className={`text-right font-bold ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
+                              {pnlPercent}%
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="outline" size="sm">
+                                Close
+                              </Button>
                             </TableCell>
                           </TableRow>
                         );
@@ -164,30 +250,100 @@ export default function TraderDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Trades Tab */}
-          <TabsContent value="trades" className="space-y-4">
+          {/* Strategies Tab */}
+          <TabsContent value="strategies" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Recent Trades</CardTitle>
-                <CardDescription>Your latest trading activity</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Your Trading Strategies</CardTitle>
+                    <CardDescription>Manage and deploy your algorithmic strategies</CardDescription>
+                  </div>
+                  <Link href="/strategies">
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Strategy
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!strategies || strategies.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Code2 className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <h3 className="text-lg font-semibold mb-2">No Strategies Yet</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Create your first trading strategy to start automated trading
+                    </p>
+                    <Link href="/strategies">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Build Strategy
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {strategies.map((strategy) => (
+                      <Card key={strategy.id} className="border-border/50">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <CardTitle className="text-base">{strategy.name}</CardTitle>
+                              <CardDescription className="text-xs mt-1">
+                                {strategy.description || "No description"}
+                              </CardDescription>
+                            </div>
+                            <Badge variant="secondary">Active</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex gap-2">
+                            <Link href={`/demo?strategy=${strategy.id}`}>
+                              <Button size="sm" variant="outline">
+                                <PlayCircle className="h-4 w-4 mr-2" />
+                                Backtest
+                              </Button>
+                            </Link>
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Trade History Tab */}
+          <TabsContent value="history" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Trade History</CardTitle>
+                <CardDescription>Review your past trading activity</CardDescription>
               </CardHeader>
               <CardContent>
                 {recentTrades.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No trades yet
+                  <div className="text-center py-16 text-muted-foreground">
+                    <BarChart3 className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                    <p>No trades executed yet</p>
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Time</TableHead>
                         <TableHead>Symbol</TableHead>
                         <TableHead>Side</TableHead>
-                        <TableHead>Quantity</TableHead>
-                        <TableHead>Entry Price</TableHead>
-                        <TableHead>Exit Price</TableHead>
-                        <TableHead>P&L</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Entry</TableHead>
+                        <TableHead className="text-right">Exit</TableHead>
+                        <TableHead className="text-right">P&L</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Time</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -195,16 +351,23 @@ export default function TraderDashboard() {
                         const pnl = parseFloat(trade.pnl || "0");
                         return (
                           <TableRow key={trade.id}>
+                            <TableCell className="text-sm">
+                              {trade.entryTime
+                                ? new Date(trade.entryTime).toLocaleString()
+                                : "N/A"}
+                            </TableCell>
                             <TableCell className="font-medium">{trade.symbol}</TableCell>
                             <TableCell>
                               <Badge variant={trade.side === "buy" ? "default" : "secondary"}>
-                                {trade.side}
+                                {trade.side.toUpperCase()}
                               </Badge>
                             </TableCell>
-                            <TableCell>{trade.quantity}</TableCell>
-                            <TableCell>${trade.entryPrice}</TableCell>
-                            <TableCell>{trade.exitPrice ? `$${trade.exitPrice}` : "-"}</TableCell>
-                            <TableCell className={pnl >= 0 ? "text-green-500" : "text-red-500"}>
+                            <TableCell className="text-right font-mono">{trade.quantity}</TableCell>
+                            <TableCell className="text-right font-mono">${trade.entryPrice}</TableCell>
+                            <TableCell className="text-right font-mono">
+                              {trade.exitPrice ? `$${trade.exitPrice}` : "-"}
+                            </TableCell>
+                            <TableCell className={`text-right font-bold ${pnl >= 0 ? "text-green-500" : "text-red-500"}`}>
                               {trade.pnl ? `$${pnl.toFixed(2)}` : "-"}
                             </TableCell>
                             <TableCell>
@@ -220,11 +383,6 @@ export default function TraderDashboard() {
                                 {trade.status}
                               </Badge>
                             </TableCell>
-                            <TableCell>
-                              {trade.entryTime
-                                ? new Date(trade.entryTime).toLocaleString()
-                                : "N/A"}
-                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -235,101 +393,75 @@ export default function TraderDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Risk Management Tab */}
+          {/* Risk Controls Tab */}
           <TabsContent value="risk" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Limits</CardTitle>
-                <CardDescription>Configure your risk management parameters</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!riskLimits || riskLimits.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No risk limits configured
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Risk Limits
+                  </CardTitle>
+                  <CardDescription>Configure your risk management parameters</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!riskLimits || riskLimits.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p className="mb-4">No risk limits configured</p>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Risk Limit
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
                       {riskLimits.map((limit) => (
-                        <TableRow key={limit.id}>
-                          <TableCell className="font-medium capitalize">
-                            {limit.type.replace("_", " ")}
-                          </TableCell>
-                          <TableCell>{limit.value}</TableCell>
-                          <TableCell>
-                            <Badge variant={limit.enabled === "yes" ? "default" : "secondary"}>
-                              {limit.enabled === "yes" ? "Active" : "Disabled"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {limit.createdAt
-                              ? new Date(limit.createdAt).toLocaleString()
-                              : "N/A"}
-                          </TableCell>
-                        </TableRow>
+                        <div key={limit.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium capitalize text-sm">
+                              {limit.type.replace("_", " ")}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{limit.value}</p>
+                          </div>
+                          <Badge variant={limit.enabled === "yes" ? "default" : "secondary"}>
+                            {limit.enabled === "yes" ? "Active" : "Disabled"}
+                          </Badge>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Performance Metrics</CardTitle>
-                <CardDescription>Analyze your trading performance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!metrics || metrics.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No performance data available yet
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Metrics</CardTitle>
+                  <CardDescription>Track your trading performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total Trades</span>
+                      <span className="font-bold">{totalTrades}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Win Rate</span>
+                      <span className="font-bold">{winRate}%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Total P&L</span>
+                      <span className={`font-bold ${totalPnL >= 0 ? "text-green-500" : "text-red-500"}`}>
+                        ${totalPnL.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Active Strategies</span>
+                      <span className="font-bold">{strategies?.length || 0}</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {metrics.map((metric) => (
-                      <Card key={metric.id}>
-                        <CardHeader>
-                          <CardTitle className="text-sm capitalize">{metric.period} Performance</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Total Return:</span>
-                            <span className="text-sm font-medium">{metric.totalReturn || "N/A"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Sharpe Ratio:</span>
-                            <span className="text-sm font-medium">{metric.sharpeRatio || "N/A"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Max Drawdown:</span>
-                            <span className="text-sm font-medium">{metric.maxDrawdown || "N/A"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Win Rate:</span>
-                            <span className="text-sm font-medium">{metric.winRate || "N/A"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-muted-foreground">Total Trades:</span>
-                            <span className="text-sm font-medium">{metric.totalTrades || "0"}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
