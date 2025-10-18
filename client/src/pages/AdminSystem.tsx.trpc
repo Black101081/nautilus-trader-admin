@@ -20,103 +20,62 @@ import {
   Network,
   RefreshCw,
 } from "lucide-react";
+import { trpc } from "../lib/trpc";
 
-interface SystemStatus {
-  status: string;
-  version: string;
-  uptime_seconds: number;
-  uptime_formatted: string;
-  timestamp: string;
-  nautilus_available: boolean;
-}
+export default function AdminSystemNew() {
+  const [refreshKey, setRefreshKey] = useState(0);
 
-interface Component {
-  name: string;
-  state: string;
-  description: string;
-  uptime: number;
-  health: string;
-  metrics?: any;
-}
+  // Fetch real data from tRPC APIs
+  const { data: systemStatus, isLoading: isLoadingStatus } = trpc.nautilusCore.getSystemStatus.useQuery(
+    undefined,
+    { refetchInterval: 5000, queryKey: ["systemStatus", refreshKey] }
+  );
 
-interface SystemMetrics {
-  cpu: {
-    percent: number;
-    count: number;
-    per_cpu: number[];
-  };
-  memory: {
-    total_gb: number;
-    used_gb: number;
-    available_gb: number;
-    percent: number;
-  };
-  disk: {
-    total_gb: number;
-    used_gb: number;
-    free_gb: number;
-    percent: number;
-  };
-  network: {
-    bytes_sent_mb: number;
-    bytes_recv_mb: number;
-    packets_sent: number;
-    packets_recv: number;
-  };
-  timestamp: string;
-}
+  const { data: allComponents, isLoading: isLoadingComponents } = trpc.nautilusCore.getAllComponents.useQuery(
+    undefined,
+    { refetchInterval: 5000, queryKey: ["allComponents", refreshKey] }
+  );
 
-interface TradingMetrics {
-  total_orders: number;
-  orders_per_sec: number;
-  avg_latency_ms: number;
-  latency_p95_ms: number;
-  active_connections: number;
-  active_strategies: number;
-}
+  const { data: systemMetrics, isLoading: isLoadingMetrics } = trpc.nautilusCore.getSystemMetrics.useQuery(
+    undefined,
+    { refetchInterval: 5000, queryKey: ["systemMetrics", refreshKey] }
+  );
 
-export default function AdminSystemDirect() {
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
-  const [components, setComponents] = useState<Component[]>([]);
-  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
-  const [tradingMetrics, setTradingMetrics] = useState<TradingMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: tradingMetrics, isLoading: isLoadingTrading } = trpc.nautilusCore.getTradingMetrics.useQuery(
+    undefined,
+    { refetchInterval: 5000, queryKey: ["tradingMetrics", refreshKey] }
+  );
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Fetch all data in parallel
-      const [statusRes, componentsRes, metricsRes, tradingRes] = await Promise.all([
-        fetch('/api/trpc/nautilusCore.getSystemStatus').then(r => r.json()),
-        fetch('/api/trpc/nautilusCore.getAllComponents').then(r => r.json()),
-        fetch('/api/trpc/nautilusCore.getSystemMetrics').then(r => r.json()),
-        fetch('/api/trpc/nautilusCore.getTradingMetrics').then(r => r.json()),
-      ]);
+  const restartMutation = trpc.nautilusCore.restartComponent.useMutation({
+    onSuccess: () => {
+      setRefreshKey(prev => prev + 1);
+    },
+  });
 
-      // Extract data from tRPC response format
-      setSystemStatus(statusRes.result?.data?.json || null);
-      setComponents(componentsRes.result?.data?.json || []);
-      setSystemMetrics(metricsRes.result?.data?.json || null);
-      setTradingMetrics(tradingRes.result?.data?.json || null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch data');
-      console.error('Fetch error:', err);
-    } finally {
-      setIsLoading(false);
+  const handleRestart = (componentName: string) => {
+    if (confirm(`Are you sure you want to restart ${componentName}?`)) {
+      restartMutation.mutate({ component: componentName });
     }
   };
 
-  useEffect(() => {
-    fetchData();
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
+  // Map component data to display format
+  const getComponentDisplayData = () => {
+    if (!allComponents || !Array.isArray(allComponents)) return [];
     
-    // Auto-refresh disabled to avoid rate limiting
-    // Uncomment below to enable auto-refresh
-    // const interval = setInterval(fetchData, 10000);
-    // return () => clearInterval(interval);
-  }, []);
+    return allComponents.map((comp: any) => ({
+      name: comp.name,
+      status: comp.state?.toLowerCase() || "unknown",
+      uptime: formatUptime(comp.uptime || 0),
+      cpu: comp.metrics?.cpu_percent ? `${comp.metrics.cpu_percent}%` : "N/A",
+      memory: comp.metrics?.memory_mb ? `${(comp.metrics.memory_mb / 1024).toFixed(1)} GB` : "N/A",
+      description: comp.description || "",
+      health: comp.health || "unknown",
+    }));
+  };
 
   const formatUptime = (seconds: number) => {
     const days = Math.floor(seconds / 86400);
@@ -152,6 +111,8 @@ export default function AdminSystemDirect() {
     );
   };
 
+  const systemComponents = getComponentDisplayData();
+
   // Mock data feeds (would be replaced with real API later)
   const dataFeeds = [
     { name: "Interactive Brokers", status: "connected", latency: "12ms", messages: "1.2M/day" },
@@ -160,27 +121,7 @@ export default function AdminSystemDirect() {
     { name: "Alpaca", status: "disconnected", latency: "N/A", messages: "0" },
   ];
 
-  if (error) {
-    return (
-      <AdminLayout>
-        <div className="container py-6">
-          <Card>
-            <CardContent className="py-8">
-              <div className="text-center text-red-500">
-                <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-                <p className="text-lg font-semibold">Error loading system data</p>
-                <p className="text-sm text-muted-foreground mt-2">{error}</p>
-                <Button onClick={fetchData} className="mt-4">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Retry
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </AdminLayout>
-    );
-  }
+  const isLoading = isLoadingStatus || isLoadingComponents || isLoadingMetrics || isLoadingTrading;
 
   return (
     <AdminLayout>
@@ -201,7 +142,7 @@ export default function AdminSystemDirect() {
                 {systemStatus.status === "running" ? "All Systems Operational" : systemStatus.status}
               </Badge>
             )}
-            <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
@@ -280,7 +221,7 @@ export default function AdminSystemDirect() {
             <TabsTrigger value="components">
               System Components
               <Badge variant="secondary" className="ml-2">
-                {components.length}
+                {systemComponents.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="feeds">
@@ -298,7 +239,7 @@ export default function AdminSystemDirect() {
             <TabsTrigger value="config">
               Configuration
               <Badge variant="secondary" className="ml-2">
-                Info
+                20
               </Badge>
             </TabsTrigger>
           </TabsList>
@@ -313,42 +254,47 @@ export default function AdminSystemDirect() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {isLoading ? (
+                {isLoadingComponents ? (
                   <div className="text-center py-8 text-muted-foreground">Loading components...</div>
-                ) : components.length === 0 ? (
+                ) : systemComponents.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">No components found</div>
                 ) : (
-                  components.map((component, index) => (
+                  systemComponents.map((component, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card/50"
                     >
                       <div className="flex items-center gap-4">
-                        {getStatusIcon(component.state?.toLowerCase() || "unknown")}
+                        {getStatusIcon(component.status)}
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold">{component.name}</h3>
-                            {getStatusBadge(component.state?.toLowerCase() || "unknown")}
+                            {getStatusBadge(component.status)}
                           </div>
                           <p className="text-sm text-muted-foreground">{component.description}</p>
                           <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {formatUptime(component.uptime || 0)}
+                              {component.uptime}
                             </span>
                             <span className="flex items-center gap-1">
                               <Cpu className="h-3 w-3" />
-                              CPU: {component.metrics?.cpu_percent ? `${component.metrics.cpu_percent}%` : "N/A"}
+                              CPU: {component.cpu}
                             </span>
                             <span className="flex items-center gap-1">
                               <HardDrive className="h-3 w-3" />
-                              RAM: {component.metrics?.memory_mb ? `${(component.metrics.memory_mb / 1024).toFixed(1)} GB` : "N/A"}
+                              RAM: {component.memory}
                             </span>
                           </div>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRestart(component.name)}
+                          disabled={restartMutation.isPending}
+                        >
                           <RefreshCw className="h-4 w-4 mr-1" />
                           Restart
                         </Button>

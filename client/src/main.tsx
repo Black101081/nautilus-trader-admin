@@ -49,6 +49,7 @@ const trpcClient = trpc.createClient({
       },
     }),
   ],
+  transformer: superjson,
 });
 
 createRoot(document.getElementById("root")!).render(
