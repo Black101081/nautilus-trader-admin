@@ -1,0 +1,329 @@
+
+import React, { useState } from 'react';
+import { TraderLayout } from '@/components/TraderLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { trpc } from '@/lib/trpc';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+
+interface Metric {
+  name: string;
+  value: number | string;
+  unit?: string;
+}
+
+const QuickBacktest: React.FC = () => {
+  const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
+  const [backtestExecuted, setBacktestExecuted] = useState(false);
+
+  // Data fetching using tRPC
+  const { data: strategies, isLoading: isLoadingStrategies, isError: isErrorStrategies, refetch: refetchStrategies } = trpc.strategies.list.useQuery();
+  const { data: metrics, isLoading: isLoadingMetrics, isError: isErrorMetrics, refetch: refetchMetrics } = trpc.risk.metrics.useQuery(undefined, { enabled: backtestExecuted });
+  const { data: trades, isLoading: isLoadingTrades, isError: isErrorTrades, refetch: refetchTrades } = trpc.trading.liveTrades.useQuery(undefined, { enabled: backtestExecuted });
+
+  const handleRunBacktest = () => {
+    if (!selectedStrategy) {
+      toast.error("Please select a strategy to run the backtest.");
+      return;
+    }
+    // In a real scenario, this would trigger a backend backtest process
+    // and update the backtestExecuted state once results are available.
+    // For this implementation, we'll just simulate it.
+    setBacktestExecuted(true);
+    toast.success(`Running backtest for ${selectedStrategy}...`);
+    // Simulate data refetch after a backtest run
+    setTimeout(() => {
+      refetchMetrics();
+      refetchTrades();
+      toast.success("Backtest results are now available.");
+    }, 2000);
+  };
+
+  const handleRefresh = () => {
+    refetchStrategies();
+    if (backtestExecuted) {
+      refetchMetrics();
+      refetchTrades();
+    }
+    toast({
+      title: "Data Refreshed",
+      description: "Latest data has been fetched.",
+    });
+  };
+
+  const handleExport = () => {
+    // Implement export logic here, e.g., convert data to CSV/PDF
+    toast({
+      title: "Export Functionality",
+      description: "Exporting data is not yet fully implemented.",
+      variant: "default",
+    });
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+  };
+
+  const getPnLColorClass = (pnl: number) => {
+    if (pnl > 0) return 'text-green-500';
+    if (pnl < 0) return 'text-red-500';
+    return 'text-gray-500';
+  };
+
+  // Dummy data for metrics if not loaded, to prevent errors in rendering
+  const dummyMetrics = {
+    totalPnL: 0,
+    netProfit: 0,
+    grossProfit: 0,
+    grossLoss: 0,
+    profitFactor: 0,
+    maxDrawdown: 0,
+    sharpeRatio: 0,
+    sortinoRatio: 0,
+    totalTrades: 0,
+    winningTrades: 0,
+    losingTrades: 0,
+    winRate: 0,
+    avgWin: 0,
+    avgLoss: 0,
+  };
+
+  const currentMetrics = metrics || dummyMetrics;
+
+  const summaryMetrics: Metric[] = [
+    { name: 'Total P&L', value: formatCurrency(currentMetrics.totalPnL) },
+    { name: 'Net Profit', value: formatCurrency(currentMetrics.netProfit) },
+    { name: 'Gross Profit', value: formatCurrency(currentMetrics.grossProfit) },
+    { name: 'Gross Loss', value: formatCurrency(currentMetrics.grossLoss) },
+    { name: 'Profit Factor', value: (currentMetrics.profitFactor).toFixed(2) },
+    { name: 'Max Drawdown', value: formatCurrency(currentMetrics.maxDrawdown) },
+    { name: 'Sharpe Ratio', value: (currentMetrics.sharpeRatio).toFixed(2) },
+    { name: 'Sortino Ratio', value: (currentMetrics.sortinoRatio).toFixed(2) },
+  ];
+
+  const performanceMetrics: Metric[] = [
+    { name: 'Total P&L', value: formatCurrency(currentMetrics.totalPnL) },
+    { name: 'Net Profit', value: formatCurrency(currentMetrics.netProfit) },
+    { name: 'Gross Profit', value: formatCurrency(currentMetrics.grossProfit) },
+    { name: 'Gross Loss', value: formatCurrency(currentMetrics.grossLoss) },
+    { name: 'Profit Factor', value: (currentMetrics.profitFactor).toFixed(2) },
+    { name: 'Max Drawdown', value: formatCurrency(currentMetrics.maxDrawdown) },
+    { name: 'Sharpe Ratio', value: (currentMetrics.sharpeRatio).toFixed(2) },
+    { name: 'Sortino Ratio', value: (currentMetrics.sortinoRatio).toFixed(2) },
+    { name: 'Total Trades', value: currentMetrics.totalTrades },
+    { name: 'Winning Trades', value: currentMetrics.winningTrades },
+    { name: 'Losing Trades', value: currentMetrics.losingTrades },
+    { name: 'Win Rate', value: `${(currentMetrics.winRate).toFixed(2)}%` },
+    { name: 'Avg. Win', value: formatCurrency(currentMetrics.avgWin) },
+    { name: 'Avg. Loss', value: formatCurrency(currentMetrics.avgLoss) },
+  ];
+
+  return (
+    <TraderLayout
+      title="Quick Backtest"
+      description="Configure and run quick backtests for strategies."
+      headerRight={
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh}>Refresh</Button>
+          <Button variant="outline" size="sm" onClick={handleExport}>Export</Button>
+        </div>
+      }
+    >
+      <div className="container mx-auto py-6 space-y-6">
+        {/* Backtest Configuration Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Backtest Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingStrategies ? (
+              <Skeleton className="h-8 w-48" />
+            ) : isErrorStrategies ? (
+              <p className="text-red-500">Error loading strategies.</p>
+            ) : strategies && strategies.length > 0 ? (
+              <>
+                <label htmlFor="strategy-select" className="block text-sm font-medium text-gray-700">Select Strategy:</label>
+                <select
+                  id="strategy-select"
+                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                  value={selectedStrategy || ''}
+                  onChange={(e) => setSelectedStrategy(e.target.value)}
+                >
+                  <option value="">-- Select a strategy --</option>
+                  {strategies.map((strategy) => (
+                    <option key={strategy.id} value={strategy.name}>
+                      {strategy.name}
+                    </option>
+                  ))}
+                </select>
+                <Button className="mt-4" onClick={handleRunBacktest} disabled={!selectedStrategy}>Run Backtest</Button>
+              </>
+            ) : (
+              <p className="text-gray-500">No strategies available to backtest.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Backtest Results Section */}
+        {backtestExecuted ? (
+          <Tabs defaultValue="summary" className="w-full">
+            <TabsList>
+              <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="metrics">Metrics</TabsTrigger>
+              <TabsTrigger value="trades">Trades</TabsTrigger>
+              <TabsTrigger value="charts">Charts</TabsTrigger>
+            </TabsList>
+            <TabsContent value="summary">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Backtest Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingMetrics ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                      <Skeleton className="h-12 w-full" />
+                    </div>
+                  ) : isErrorMetrics ? (
+                    <p className="text-red-500">Error loading summary metrics.</p>
+                  ) : metrics ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {summaryMetrics.map((metric) => (
+                        <Card key={metric.name}>
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                              {metric.name}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className={`text-2xl font-bold ${metric.name.includes('P&L') || metric.name.includes('Profit') || metric.name.includes('Loss') ? getPnLColorClass(parseFloat(metric.value.toString().replace(/[^0-9.-]+/g, ''))) : ''}`}>
+                              {metric.value}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500">No summary data available for the selected backtest.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="metrics">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingMetrics ? (
+                    <Skeleton className="h-48 w-full" />
+                  ) : isErrorMetrics ? (
+                    <p className="text-red-500">Error loading performance metrics.</p>
+                  ) : metrics ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Metric</TableHead>
+                          <TableHead className="text-right">Value</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {performanceMetrics.map((metric) => (
+                          <TableRow key={metric.name}>
+                            <TableCell className="font-medium">{metric.name}</TableCell>
+                            <TableCell className={`text-right ${metric.name.includes('P&L') || metric.name.includes('Profit') || metric.name.includes('Loss') ? getPnLColorClass(parseFloat(metric.value.toString().replace(/[^0-9.-]+/g, ''))) : ''}`}>
+                              {metric.value}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-gray-500">No performance metrics available for the selected backtest.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="trades">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trade History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingTrades ? (
+                    <Skeleton className="h-48 w-full" />
+                  ) : isErrorTrades ? (
+                    <p className="text-red-500">Error loading trade history.</p>
+                  ) : trades && trades.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Symbol</TableHead>
+                          <TableHead>Side</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Price</TableHead>
+                          <TableHead>P&L</TableHead>
+                          <TableHead className="text-right">Timestamp</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {trades.map((trade) => (
+                          <TableRow key={trade.id}>
+                            <TableCell className="font-medium">{trade.symbol}</TableCell>
+                            <TableCell>
+                              <Badge variant={trade.side === 'BUY' ? 'secondary' : 'destructive'}>
+                                {trade.side}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{trade.quantity}</TableCell>
+                            <TableCell>{formatCurrency(trade.price)}</TableCell>
+                            <TableCell className={getPnLColorClass(trade.pnl)}>{formatCurrency(trade.pnl)}</TableCell>
+                            <TableCell className="text-right">{new Date(trade.timestamp).toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-gray-500">No trades executed during backtest.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="charts">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Charts</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-500">Charts for equity curve, drawdown, etc. will be implemented here. This typically involves using a charting library like Recharts or Nivo to visualize the backtest performance over time.</p>
+                  {/* Placeholder for chart component */}
+                  <div className="h-64 w-full bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center text-gray-400 mt-4">
+                    Chart Placeholder
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <Card>
+            <CardContent className="py-6 text-center text-gray-500">
+              <p>Select a strategy and run a backtest to view results.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </TraderLayout>
+  );
+};
+
+export default QuickBacktest;
+

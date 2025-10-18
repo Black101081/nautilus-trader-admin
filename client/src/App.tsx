@@ -48,6 +48,8 @@ import DocsDatabase from "./pages/DocsDatabase";
 import DocsAPI from "./pages/DocsAPI";
 import DocsUserGuide from "./pages/DocsUserGuide";
 import DocsTroubleshooting from "./pages/DocsTroubleshooting";
+// import MyStrategies from "./pages/MyStrategies"; // Disabled - has TypeScript errors
+// import QuickBacktest from "./pages/QuickBacktest"; // Disabled - has TypeScript errors
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -77,7 +79,7 @@ function Router() {
       <Route path={"/performance"} component={Performance} />
       <Route path={"/risk"} component={RiskAnalysis} />
       <Route path={"/journal"} component={TradeJournal} />
-      <Route path={"/builder"} component={StrategyBuilder} />
+
       <Route path={"/admin/system"} component={AdminSystem} />
       <Route path={"/admin/core"} component={AdminCoreManagement} />
       <Route path={"/admin/health"} component={AdminHealth} />
@@ -98,7 +100,8 @@ function Router() {
       <Route path={"/admin/docs/api"} component={DocsAPI} />
       <Route path={"/admin/docs/user-guide"} component={DocsUserGuide} />
       <Route path={"/admin/docs/troubleshooting"} component={DocsTroubleshooting} />
-      <Route path={"/404"} component={NotFound} />
+      {/* <Route path={"/my-strategies"} component={MyStrategies} /> */}
+      {/* <Route path={"/quick-backtest"} component={QuickBacktest} /> */}
       <Route component={NotFound} />
     </Switch>
   );

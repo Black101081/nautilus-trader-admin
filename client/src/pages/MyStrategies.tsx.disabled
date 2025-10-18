@@ -1,0 +1,240 @@
+
+import { useState } from 'react';
+import { TraderLayout } from '@/components/TraderLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { trpc } from '@/lib/trpc';
+import { RefreshCw, Download } from 'lucide-react';
+
+interface StrategyMetrics {
+  strategyId: string;
+  name: string;
+  status: 'Running' | 'Stopped' | 'Paused';
+  pnl: number;
+  trades: number;
+  winRate: number;
+  // Add more relevant metrics here
+}
+
+export default function MyStrategies() {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const { data: strategies, isLoading: isLoadingStrategies, error: strategiesError, refetch: refetchStrategies } = trpc.strategies.list.useQuery();
+  // Potentially fetch risk metrics or other performance data related to strategies
+  // const { data: riskMetrics, isLoading: isLoadingRiskMetrics, error: riskMetricsError } = trpc.risk.metrics.useQuery();
+
+  const handleRefresh = () => {
+    refetchStrategies();
+    // refetch other relevant data
+  };
+
+  const handleExport = () => {
+    // Implement export logic here
+    console.log('Exporting strategies data...');
+  };
+
+  const renderStrategyMetrics = (strategy: StrategyMetrics) => {
+    const pnlColor = strategy.pnl >= 0 ? 'text-green-500' : 'text-red-500';
+
+    return (
+      <TableRow key={strategy.strategyId}>
+        <TableCell className="font-medium">{strategy.name}</TableCell>
+        <TableCell><Badge variant={strategy.status === 'Running' ? 'default' : 'secondary'}>{strategy.status}</Badge></TableCell>
+        <TableCell className={pnlColor}>{strategy.pnl.toFixed(2)}</TableCell>
+        <TableCell>{strategy.trades}</TableCell>
+        <TableCell>{(strategy.winRate * 100).toFixed(2)}%</TableCell>
+        <TableCell>
+          <Button variant="outline" size="sm">View Details</Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  return (
+    <TraderLayout
+      title="My Strategies"
+      description="Manage and monitor your algorithmic trading strategies."
+      headerActions={(
+        <div className="flex space-x-2">
+          <Button variant="outline" onClick={handleRefresh}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+          </Button>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
+        </div>
+      )}
+    >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="running">Running Strategies</TabsTrigger>
+          <TabsTrigger value="stopped">Stopped Strategies</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Strategies</CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-4 w-4 text-muted-foreground"
+                >
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{strategies?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total number of configured strategies.
+                </p>
+              </CardContent>
+            </Card>
+            {/* Add more statistics cards here, e.g., Total P&L, Active Strategies, etc. */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total P&L</CardTitle>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  className="h-4 w-4 text-muted-foreground"
+                >
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {isLoadingStrategies ? 'Loading...' : (
+                    <span className={((strategies?.reduce((acc, s) => acc + (s.pnl || 0), 0) || 0) >= 0 ? 'text-green-500' : 'text-red-500')}>
+                      {(strategies?.reduce((acc, s) => acc + (s.pnl || 0), 0) || 0).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Cumulative P&L across all strategies.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>All Strategies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingStrategies ? (
+                <div>Loading strategies...</div>
+              ) : strategiesError ? (
+                <div className="text-red-500">Error loading strategies: {strategiesError.message}</div>
+              ) : strategies && strategies.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>P&L</TableHead>
+                      <TableHead>Trades</TableHead>
+                      <TableHead>Win Rate</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {strategies.map(strategy => renderStrategyMetrics(strategy as StrategyMetrics))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No strategies found. Start by creating a new strategy.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="running">
+          <Card>
+            <CardHeader>
+              <CardTitle>Running Strategies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingStrategies ? (
+                <div>Loading running strategies...</div>
+              ) : strategiesError ? (
+                <div className="text-red-500">Error loading strategies: {strategiesError.message}</div>
+              ) : strategies && strategies.filter(s => s.status === 'Running').length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>P&L</TableHead>
+                      <TableHead>Trades</TableHead>
+                      <TableHead>Win Rate</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {strategies.filter(s => s.status === 'Running').map(strategy => renderStrategyMetrics(strategy as StrategyMetrics))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No running strategies found.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="stopped">
+          <Card>
+            <CardHeader>
+              <CardTitle>Stopped Strategies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingStrategies ? (
+                <div>Loading stopped strategies...</div>
+              ) : strategiesError ? (
+                <div className="text-red-500">Error loading strategies: {strategiesError.message}</div>
+              ) : strategies && strategies.filter(s => s.status === 'Stopped').length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>P&L</TableHead>
+                      <TableHead>Trades</TableHead>
+                      <TableHead>Win Rate</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {strategies.filter(s => s.status === 'Stopped').map(strategy => renderStrategyMetrics(strategy as StrategyMetrics))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No stopped strategies found.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </TraderLayout>
+  );
+}
+
