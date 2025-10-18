@@ -1,9 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import { spawn } from "child_process";
 import path from "path";
+import { fileURLToPath } from "url";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import * as db from "./db";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
