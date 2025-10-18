@@ -505,6 +505,23 @@ print(json.dumps(result))
 
   // Risk Management
   risk: router({
+    getRiskLimits: publicProcedure.query(async () => {
+      return {
+        globalLimits: {
+          maxPositionSize: 10000,
+          maxDailyLoss: 50000,
+          maxLeverage: 3.0,
+          maxOrderSize: 5000,
+          maxPortfolioExposure: 100000,
+        },
+      };
+    }),
+    updateRiskLimit: publicProcedure
+      .input(z.object({ limitType: z.string(), value: z.number() }))
+      .mutation(async ({ input }) => {
+        // TODO: Persist to database
+        return { success: true };
+      }),
     limits: publicProcedure.query(async () => {
       const { getRiskLimits } = await import("./db_helpers");
       return await getRiskLimits();
