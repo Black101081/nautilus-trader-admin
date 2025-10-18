@@ -47,8 +47,12 @@ async function startServer() {
   // Input sanitization
   app.use(sanitizeInput);
   
-  // General rate limiting
-  app.use('/api/', generalRateLimit);
+  // General rate limiting (disabled in development)
+  if (process.env.NODE_ENV === 'production') {
+    app.use('/api/', generalRateLimit);
+  } else {
+    console.log('⚠️  Rate limiting DISABLED in development mode');
+  }
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

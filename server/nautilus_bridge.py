@@ -158,6 +158,15 @@ class NautilusCoreManager:
     def get_trading_metrics(self) -> Dict[str, Any]:
         """Get trading-specific metrics"""
         return {
+            # Flat structure for frontend compatibility
+            "total_orders": 1234,
+            "orders_per_sec": 12.5,
+            "avg_latency_ms": 45.3,
+            "latency_p95_ms": 78.5,
+            "active_connections": 8,
+            "active_strategies": 3,
+            
+            # Detailed nested structure
             "orders": {
                 "total_today": 1234,
                 "filled": 1198,

@@ -5,13 +5,19 @@ import { Request, Response } from 'express';
  * Rate limiting configuration
  */
 
-// General API rate limit (100 requests per 15 minutes)
+// General API rate limit (1000 requests per 15 minutes - increased for development)
 export const generalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 1000, // Limit each IP to 1000 requests per windowMs (increased from 100)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  skip: (req: Request) => {
+    // Skip rate limiting for localhost in development
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip?.startsWith('::ffff:127.0.0.1');
+    return isDevelopment && isLocalhost;
+  },
   handler: (req: Request, res: Response) => {
     res.status(429).json({
       error: 'Too many requests',
