@@ -28,12 +28,12 @@ export default function Positions() {
     const shortPositions = openPositions.filter(p => p.side === 'SHORT').length;
     
     const totalUnrealizedPnL = positions.reduce((sum, pos) => {
-      const pnl = parseFloat(pos.unrealized_pnl || "0");
+      const pnl = Number(pos.unrealized_pnl) || 0;
       return sum + pnl;
     }, 0);
 
-    const winningPositions = positions.filter(p => parseFloat(p.unrealized_pnl || "0") > 0).length;
-    const losingPositions = positions.filter(p => parseFloat(p.unrealized_pnl || "0") < 0).length;
+    const winningPositions = positions.filter(p => (Number(p.unrealized_pnl) || 0) > 0).length;
+    const losingPositions = positions.filter(p => (Number(p.unrealized_pnl) || 0) < 0).length;
 
     return {
       totalPositions: openPositions.length,
@@ -181,10 +181,10 @@ export default function Positions() {
                   </thead>
                   <tbody>
                     {filteredPositions.map((position) => {
-                      const unrealizedPnL = parseFloat(position.unrealized_pnl || "0");
-                      const quantity = parseFloat(position.quantity || "0");
-                      const entryPrice = parseFloat(position.entry_price || "0");
-                      const currentPrice = parseFloat(position.current_price || "0");
+                      const unrealizedPnL = Number(position.unrealized_pnl) || 0;
+                      const quantity = Number(position.quantity) || 0;
+                      const entryPrice = Number(position.entry_price) || 0;
+                      const currentPrice = Number(position.current_price) || 0;
                       const pnlPercent = entryPrice > 0 ? ((currentPrice - entryPrice) / entryPrice) * 100 : 0;
 
                       return (

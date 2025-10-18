@@ -48,7 +48,6 @@ export default function Docs() {
             </CardContent>
           </Card>
 
-          {/* Key Features */}
           <Card className="border-border/50">
             <CardHeader>
               <CardTitle>Key Features</CardTitle>

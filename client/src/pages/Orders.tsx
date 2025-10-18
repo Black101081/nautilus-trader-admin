@@ -187,9 +187,9 @@ export default function Orders() {
                       </thead>
                       <tbody>
                         {filteredOrders.map((order) => {
-                          const quantity = parseFloat(order.quantity || "0");
-                          const price = parseFloat(order.price || "0");
-                          const filledQty = parseFloat(order.filled_quantity || "0");
+                          const quantity = Number(order.quantity) || 0;
+                          const price = Number(order.price) || 0;
+                          const filledQty = Number(order.filled_quantity) || 0;
                           const fillPercent = quantity > 0 ? (filledQty / quantity) * 100 : 0;
 
                           return (

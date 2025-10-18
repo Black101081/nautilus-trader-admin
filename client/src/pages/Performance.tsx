@@ -17,17 +17,17 @@ export default function Performance() {
     
     // Calculate realized P&L from trades
     const realizedPnL = trades?.reduce((sum, trade) => {
-      return sum + parseFloat(trade.pnl || "0");
+      return sum + (Number(trade.pnl) || 0);
     }, 0) || 0;
 
     // Calculate unrealized P&L from positions
     const unrealizedPnL = positions?.reduce((sum, pos) => {
-      return sum + parseFloat(pos.unrealized_pnl || "0");
+      return sum + (Number(pos.unrealized_pnl) || 0);
     }, 0) || 0;
 
     // Calculate total commissions
     const totalCommissions = trades?.reduce((sum, trade) => {
-      return sum + parseFloat(trade.commission || "0");
+      return sum + (Number(trade.commission) || 0);
     }, 0) || 0;
 
     // Net P&L
@@ -40,18 +40,18 @@ export default function Performance() {
     const totalReturn = ((totalValue - initialBalance) / initialBalance) * 100;
 
     // Win rate
-    const winningTrades = trades?.filter(t => parseFloat(t.pnl || "0") > 0).length || 0;
-    const losingTrades = trades?.filter(t => parseFloat(t.pnl || "0") < 0).length || 0;
+    const winningTrades = trades?.filter(t => (Number(t.pnl) || 0) > 0).length || 0;
+    const losingTrades = trades?.filter(t => (Number(t.pnl) || 0) < 0).length || 0;
     const totalTrades = trades?.length || 0;
     const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
 
     // Average win/loss
     const avgWin = winningTrades > 0 
-      ? (trades?.filter(t => parseFloat(t.pnl || "0") > 0).reduce((sum, t) => sum + parseFloat(t.pnl || "0"), 0) || 0) / winningTrades
+      ? (trades?.filter(t => (Number(t.pnl) || 0) > 0).reduce((sum, t) => sum + (Number(t.pnl) || 0), 0) || 0) / winningTrades
       : 0;
     
     const avgLoss = losingTrades > 0
-      ? Math.abs((trades?.filter(t => parseFloat(t.pnl || "0") < 0).reduce((sum, t) => sum + parseFloat(t.pnl || "0"), 0) || 0) / losingTrades)
+      ? Math.abs((trades?.filter(t => (Number(t.pnl) || 0) < 0).reduce((sum, t) => sum + (Number(t.pnl) || 0), 0) || 0) / losingTrades)
       : 0;
 
     // Profit factor

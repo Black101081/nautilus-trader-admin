@@ -28,22 +28,22 @@ export default function TradeHistory() {
     const sellTrades = trades.filter(t => t.side === 'SELL').length;
     
     const totalPnL = trades.reduce((sum, trade) => {
-      const pnl = parseFloat(trade.pnl || "0");
+      const pnl = Number(trade.pnl) || 0;
       return sum + pnl;
     }, 0);
 
     const totalVolume = trades.reduce((sum, trade) => {
-      const quantity = parseFloat(trade.quantity || "0");
-      const price = parseFloat(trade.price || "0");
+      const quantity = Number(trade.quantity) || 0;
+      const price = Number(trade.price) || 0;
       return sum + (quantity * price);
     }, 0);
 
     const totalCommission = trades.reduce((sum, trade) => {
-      const commission = parseFloat(trade.commission || "0");
+      const commission = Number(trade.commission) || 0;
       return sum + commission;
     }, 0);
 
-    const winningTrades = trades.filter(t => parseFloat(t.pnl || "0") > 0).length;
+    const winningTrades = trades.filter(t => (Number(t.pnl) || 0) > 0).length;
     const winRate = trades.length > 0 ? (winningTrades / trades.length) * 100 : 0;
     const avgPnL = trades.length > 0 ? totalPnL / trades.length : 0;
 
@@ -190,11 +190,11 @@ export default function TradeHistory() {
                   </thead>
                   <tbody>
                     {filteredTrades.map((trade) => {
-                      const quantity = parseFloat(trade.quantity || "0");
-                      const price = parseFloat(trade.price || "0");
+                      const quantity = Number(trade.quantity) || 0;
+                      const price = Number(trade.price) || 0;
                       const value = quantity * price;
-                      const commission = parseFloat(trade.commission || "0");
-                      const pnl = parseFloat(trade.pnl || "0");
+                      const commission = Number(trade.commission) || 0;
+                      const pnl = Number(trade.pnl) || 0;
 
                       return (
                         <tr key={trade.id} className="border-b border-border/20 hover:bg-muted/50 transition-colors">

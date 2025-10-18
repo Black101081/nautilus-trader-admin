@@ -736,8 +736,18 @@ print(json.dumps(list_parquet_directories()))
   // Live Trading
   trading: router({
     positions: publicProcedure.query(async () => {
-      const { getPositions } = await import("./db_helpers");
-      return await getPositions();
+      const { getPostgresPositions } = await import("./postgres_helpers");
+      return await getPostgresPositions({ status: 'OPEN' });
+    }),
+
+    orders: publicProcedure.query(async () => {
+      const { getPostgresOrders } = await import("./postgres_helpers");
+      return await getPostgresOrders({});
+    }),
+
+    trades: publicProcedure.query(async () => {
+      const { getPostgresTrades } = await import("./postgres_helpers");
+      return await getPostgresTrades({});
     }),
 
     liveTrades: publicProcedure.query(async () => {

@@ -25,8 +25,8 @@ export default function RiskAnalysis() {
     // Current exposure
     const openPositions = positions?.filter(p => p.status === 'OPEN') || [];
     const totalExposure = openPositions.reduce((sum, pos) => {
-      const quantity = parseFloat(pos.quantity || "0");
-      const currentPrice = parseFloat(pos.current_price || "0");
+      const quantity = Number(pos.quantity) || 0;
+      const currentPrice = Number(pos.current_price) || 0;
       return sum + (quantity * currentPrice);
     }, 0);
 
@@ -35,8 +35,8 @@ export default function RiskAnalysis() {
     // Position size limits
     const maxPositionSize = currentBalance * 0.25; // 25% max per position
     const largestPosition = Math.max(...openPositions.map(pos => {
-      const quantity = parseFloat(pos.quantity || "0");
-      const currentPrice = parseFloat(pos.current_price || "0");
+      const quantity = Number(pos.quantity) || 0;
+      const currentPrice = Number(pos.current_price) || 0;
       return quantity * currentPrice;
     }), 0);
     const positionSizeUsage = maxPositionSize > 0 ? (largestPosition / maxPositionSize) * 100 : 0;
@@ -45,7 +45,7 @@ export default function RiskAnalysis() {
     const dailyLossLimit = 1000; // $1000 max daily loss
     const todayPnL = trades?.reduce((sum, trade) => {
       // TODO: Filter by today's date
-      return sum + parseFloat(trade.pnl || "0");
+      return sum + (Number(trade.pnl) || 0);
     }, 0) || 0;
     const dailyLossUsage = dailyLossLimit > 0 ? Math.abs(Math.min(todayPnL, 0) / dailyLossLimit) * 100 : 0;
 
@@ -58,8 +58,8 @@ export default function RiskAnalysis() {
     const maxConcentration = 0.25; // 25% max per instrument
     const instrumentExposure = openPositions.reduce((acc, pos) => {
       const instrument = pos.instrument_id;
-      const quantity = parseFloat(pos.quantity || "0");
-      const currentPrice = parseFloat(pos.current_price || "0");
+      const quantity = Number(pos.quantity) || 0;
+      const currentPrice = Number(pos.current_price) || 0;
       const value = quantity * currentPrice;
       acc[instrument] = (acc[instrument] || 0) + value;
       return acc;

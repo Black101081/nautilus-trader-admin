@@ -22,12 +22,12 @@ export default function Portfolio() {
     }
 
     const unrealizedPnL = positions.reduce((sum, pos) => {
-      const pnl = parseFloat(pos.unrealized_pnl || "0");
+      const pnl = Number(pos.unrealized_pnl) || 0;
       return sum + pnl;
     }, 0);
 
     const realizedPnL = positions.reduce((sum, pos) => {
-      const pnl = parseFloat(pos.realized_pnl || "0");
+      const pnl = Number(pos.realized_pnl) || 0;
       return sum + pnl;
     }, 0);
 
@@ -37,8 +37,8 @@ export default function Portfolio() {
     
     const positionsValue = positions.reduce((sum, pos) => {
       if (pos.status === 'OPEN') {
-        const quantity = parseFloat(pos.quantity || "0");
-        const currentPrice = parseFloat(pos.current_price || "0");
+        const quantity = Number(pos.quantity) || 0;
+        const currentPrice = Number(pos.current_price) || 0;
         return sum + (quantity * currentPrice);
       }
       return sum;
@@ -69,8 +69,8 @@ export default function Portfolio() {
     
     positions.forEach(pos => {
       if (pos.status === 'OPEN') {
-        const quantity = parseFloat(pos.quantity || "0");
-        const currentPrice = parseFloat(pos.current_price || "0");
+        const quantity = Number(pos.quantity) || 0;
+        const currentPrice = Number(pos.current_price) || 0;
         const value = quantity * currentPrice;
         
         const instrument = pos.instrument_id.split('.')[0]; // Get base symbol
@@ -189,10 +189,10 @@ export default function Portfolio() {
                       </thead>
                       <tbody>
                         {positions.map((position) => {
-                          const unrealizedPnL = parseFloat(position.unrealized_pnl || "0");
-                          const quantity = parseFloat(position.quantity || "0");
-                          const entryPrice = parseFloat(position.entry_price || "0");
-                          const currentPrice = parseFloat(position.current_price || "0");
+                          const unrealizedPnL = Number(position.unrealized_pnl) || 0;
+                          const quantity = Number(position.quantity) || 0;
+                          const entryPrice = Number(position.entry_price) || 0;
+                          const currentPrice = Number(position.current_price) || 0;
                           const pnlPercent = entryPrice > 0 ? ((currentPrice - entryPrice) / entryPrice) * 100 : 0;
 
                           return (
