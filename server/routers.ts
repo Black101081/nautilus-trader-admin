@@ -396,29 +396,60 @@ print(json.dumps(result))
         };
       }
 
-      const tables = [
-        { name: 'users', type: 'interface', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'strategies', type: 'interface', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'backtests', type: 'interface', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'live_trades', type: 'core', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'positions', type: 'core', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'orders', type: 'core', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'performance_metrics', type: 'core', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'risk_limits', type: 'core', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'system_logs', type: 'interface', records: 0, size: 'N/A', lastUpdated: new Date() },
-        { name: 'audit_trail', type: 'interface', records: 0, size: 'N/A', lastUpdated: new Date() },
-      ];
+      // Query real table counts from database
+      const { users, systemLogs, auditTrail, apiKeys, riskLimits, liveTrades, positions, performanceMetrics, strategies, backtests } = await import("../drizzle/schema");
+      const { sql } = await import("drizzle-orm");
 
-      return {
-        connected: true,
-        tableCount: tables.length,
-        totalRecords: 0,
-        avgQueryTime: 15,
-        tables,
-        connectionPool: { active: 3, max: 10 },
-        slowQueries: 0,
-        lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      };
+      try {
+        const [usersCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
+        const [systemLogsCount] = await db.select({ count: sql<number>`count(*)` }).from(systemLogs);
+        const [auditTrailCount] = await db.select({ count: sql<number>`count(*)` }).from(auditTrail);
+        const [apiKeysCount] = await db.select({ count: sql<number>`count(*)` }).from(apiKeys);
+        const [riskLimitsCount] = await db.select({ count: sql<number>`count(*)` }).from(riskLimits);
+        const [liveTradesCount] = await db.select({ count: sql<number>`count(*)` }).from(liveTrades);
+        const [positionsCount] = await db.select({ count: sql<number>`count(*)` }).from(positions);
+        const [performanceMetricsCount] = await db.select({ count: sql<number>`count(*)` }).from(performanceMetrics);
+        const [strategiesCount] = await db.select({ count: sql<number>`count(*)` }).from(strategies);
+        const [backtestsCount] = await db.select({ count: sql<number>`count(*)` }).from(backtests);
+
+        const tables = [
+          { name: 'users', type: 'interface', records: Number(usersCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'system_logs', type: 'interface', records: Number(systemLogsCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'audit_trail', type: 'interface', records: Number(auditTrailCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'api_keys', type: 'interface', records: Number(apiKeysCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'risk_limits', type: 'interface', records: Number(riskLimitsCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'live_trades', type: 'core', records: Number(liveTradesCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'positions', type: 'core', records: Number(positionsCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'performance_metrics', type: 'core', records: Number(performanceMetricsCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'strategies', type: 'interface', records: Number(strategiesCount.count), size: 'N/A', lastUpdated: new Date() },
+          { name: 'backtests', type: 'interface', records: Number(backtestsCount.count), size: 'N/A', lastUpdated: new Date() },
+        ];
+
+        const totalRecords = tables.reduce((sum, t) => sum + t.records, 0);
+
+        return {
+          connected: true,
+          tableCount: tables.length,
+          totalRecords,
+          avgQueryTime: 15,
+          tables,
+          connectionPool: { active: 3, max: 10 },
+          slowQueries: 0,
+          lastBackup: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        };
+      } catch (error) {
+        console.error('Error querying database stats:', error);
+        return {
+          connected: true,
+          tableCount: 10,
+          totalRecords: 0,
+          avgQueryTime: null,
+          tables: [],
+          connectionPool: { active: 0, max: 10 },
+          slowQueries: 0,
+          lastBackup: null,
+        };
+      }
     }),
 
     getAllUsers: publicProcedure.query(async () => {
