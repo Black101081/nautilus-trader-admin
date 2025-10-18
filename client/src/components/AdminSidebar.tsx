@@ -35,6 +35,7 @@ const navSections: NavSection[] = [
       { title: "Core Management", icon: Activity, href: "/admin/core" },
       { title: "Component Health", icon: Activity, href: "/admin/health" },
       { title: "Data Feeds", icon: Database, href: "/admin/feeds" },
+      { title: "Database Management", icon: Database, href: "/admin/database" },
     ],
   },
   {

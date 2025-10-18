@@ -40,6 +40,7 @@ import AdminRisk from "./pages/AdminRisk";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminBrokers from "./pages/AdminBrokers";
+import AdminDatabase from "./pages/AdminDatabase";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -82,6 +83,7 @@ function Router() {
       <Route path={"/admin/analytics"} component={AdminAnalytics} />
       <Route path={"/admin/settings"} component={AdminSettings} />
       <Route path={"/admin/brokers"} component={AdminBrokers} />
+      <Route path={"/admin/database"} component={AdminDatabase} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
