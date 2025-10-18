@@ -11,6 +11,8 @@ import StrategyBuilder from "./pages/StrategyBuilder";
 import Reports from "./pages/Reports";
 import AdminDashboard from "./pages/AdminDashboard";
 import TraderDashboard from "./pages/TraderDashboard";
+import LiveTrading from "./pages/LiveTrading";
+import AdvancedBacktest from "./pages/AdvancedBacktest";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -23,6 +25,8 @@ function Router() {
       <Route path={"/docs"} component={Docs} />
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/trader"} component={TraderDashboard} />
+      <Route path={"/live"} component={LiveTrading} />
+      <Route path={"/advanced-backtest"} component={AdvancedBacktest} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
