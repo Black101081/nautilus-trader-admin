@@ -1,4 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
+import { promisify } from "util";
+import { exec as execCallback } from "child_process";
+const exec = promisify(execCallback);
 import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -491,6 +494,110 @@ print(json.dumps(result))
         const { createPerformanceMetric } = await import("./db_helpers");
         return await createPerformanceMetric(input);
       }),
+  }),
+
+  // Nautilus Core Management
+  nautilusCore: router({
+    getSystemStatus: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_system_status; import json; print(json.dumps(get_system_status()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { status: "error", message: error.message };
+      }
+    }),
+
+    getComponentStatus: publicProcedure
+      .input(z.object({ component: z.string() }))
+      .query(async ({ input }) => {
+        try {
+          const projectRoot = path.join(__dirname, "..");
+          const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_component_status; import json; print(json.dumps(get_component_status('${input.component}')))"`);
+          return JSON.parse(stdout.trim());
+        } catch (error: any) {
+          return { error: error.message };
+        }
+      }),
+
+    getAllComponents: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_all_components; import json; print(json.dumps(get_all_components()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return [];
+      }
+    }),
+
+    getSystemMetrics: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_system_metrics; import json; print(json.dumps(get_system_metrics()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { error: error.message };
+      }
+    }),
+
+    getTradingMetrics: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_trading_metrics; import json; print(json.dumps(get_trading_metrics()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { error: error.message };
+      }
+    }),
+
+    getLogs: publicProcedure
+      .input(z.object({ 
+        component: z.string().optional(),
+        level: z.string().default("INFO"),
+        limit: z.number().default(100)
+      }))
+      .query(async ({ input }) => {
+        try {
+          const projectRoot = path.join(__dirname, "..");
+          const component = input.component ? `'${input.component}'` : "None";
+          const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_logs; import json; print(json.dumps(get_logs(${component}, '${input.level}', ${input.limit})))"`);
+          return JSON.parse(stdout.trim());
+        } catch (error: any) {
+          return [];
+        }
+      }),
+
+    restartComponent: publicProcedure
+      .input(z.object({ component: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          const projectRoot = path.join(__dirname, "..");
+          const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import restart_component; import json; print(json.dumps(restart_component('${input.component}')))"`);
+          return JSON.parse(stdout.trim());
+        } catch (error: any) {
+          return { success: false, message: error.message };
+        }
+      }),
+
+    getAdapters: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import get_adapters; import json; print(json.dumps(get_adapters()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return [];
+      }
+    }),
+
+    emergencyStopAll: publicProcedure.mutation(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.nautilus_bridge import emergency_stop_all; import json; print(json.dumps(emergency_stop_all()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { success: false, message: error.message };
+      }
+    }),
   }),
 });
 

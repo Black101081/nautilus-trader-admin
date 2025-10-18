@@ -29,6 +29,7 @@ import Performance from "./pages/Performance";
 import RiskAnalysis from "./pages/RiskAnalysis";
 import TradeJournal from "./pages/TradeJournal";
 import AdminSystem from "./pages/AdminSystem";
+import AdminCoreManagement from "./pages/AdminCoreManagement";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -60,6 +61,7 @@ function Router() {
       <Route path={"/journal"} component={TradeJournal} />
       <Route path={"/builder"} component={StrategyBuilder} />
       <Route path={"/admin/system"} component={AdminSystem} />
+      <Route path={"/admin/core"} component={AdminCoreManagement} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

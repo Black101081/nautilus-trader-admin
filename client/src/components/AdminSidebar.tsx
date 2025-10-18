@@ -32,6 +32,7 @@ const navSections: NavSection[] = [
     title: "System Management",
     items: [
       { title: "System Overview", icon: Server, href: "/admin/system" },
+      { title: "Core Management", icon: Activity, href: "/admin/core" },
       { title: "Component Health", icon: Activity, href: "/admin/health" },
       { title: "Data Feeds", icon: Database, href: "/admin/feeds" },
     ],
