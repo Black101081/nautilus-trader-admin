@@ -177,8 +177,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white group/btn"
-                onClick={() => setLocation("/")}
-              >
+             onClick={() => setLocation("/dashboard")}              >
                 <span>Enter Trading Platform</span>
                 <ArrowRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
               </Button>
