@@ -2,11 +2,14 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import cookieParser from "cookie-parser";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { applySecurityMiddleware, sanitizeInput } from "../security_middleware";
+import { generalRateLimit } from "../rate_limit_middleware";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,9 +33,22 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  
+  // Apply security middleware (CORS, Helmet, etc.)
+  applySecurityMiddleware(app);
+  
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  
+  // Cookie parser for JWT tokens
+  app.use(cookieParser());
+  
+  // Input sanitization
+  app.use(sanitizeInput);
+  
+  // General rate limiting
+  app.use('/api/', generalRateLimit);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

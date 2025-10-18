@@ -735,20 +735,50 @@ print(json.dumps(list_parquet_directories()))
 
   // Live Trading
   trading: router({
-    positions: publicProcedure.query(async () => {
-      const { getPostgresPositions } = await import("./postgres_helpers");
-      return await getPostgresPositions({ status: 'OPEN' });
-    }),
+    positions: publicProcedure
+      .input(
+        z.object({
+          status: z.enum(['OPEN', 'CLOSED']).optional(),
+          instrument_id: z.string().optional(),
+          side: z.enum(['LONG', 'SHORT']).optional(),
+          limit: z.number().int().positive().max(1000).optional(),
+          offset: z.number().int().nonnegative().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        const { getPostgresPositions } = await import("./postgres_helpers");
+        return await getPostgresPositions(input || { status: 'OPEN' });
+      }),
 
-    orders: publicProcedure.query(async () => {
-      const { getPostgresOrders } = await import("./postgres_helpers");
-      return await getPostgresOrders({});
-    }),
+    orders: publicProcedure
+      .input(
+        z.object({
+          status: z.enum(['PENDING', 'FILLED', 'PARTIALLY_FILLED', 'CANCELED', 'REJECTED']).optional(),
+          instrument_id: z.string().optional(),
+          side: z.enum(['BUY', 'SELL']).optional(),
+          order_type: z.enum(['MARKET', 'LIMIT', 'STOP', 'STOP_LIMIT']).optional(),
+          limit: z.number().int().positive().max(1000).optional(),
+          offset: z.number().int().nonnegative().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        const { getPostgresOrders } = await import("./postgres_helpers");
+        return await getPostgresOrders(input || {});
+      }),
 
-    trades: publicProcedure.query(async () => {
-      const { getPostgresTrades } = await import("./postgres_helpers");
-      return await getPostgresTrades({});
-    }),
+    trades: publicProcedure
+      .input(
+        z.object({
+          instrument_id: z.string().optional(),
+          side: z.enum(['BUY', 'SELL']).optional(),
+          limit: z.number().int().positive().max(1000).optional(),
+          offset: z.number().int().nonnegative().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        const { getPostgresTrades } = await import("./postgres_helpers");
+        return await getPostgresTrades(input || {});
+      }),
 
     liveTrades: publicProcedure.query(async () => {
       const { getLiveTrades } = await import("./db_helpers");
