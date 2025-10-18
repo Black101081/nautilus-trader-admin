@@ -30,40 +30,40 @@ export default function AdminCoreManagement() {
 
   // Existing queries
   const { data: systemStatus, refetch: refetchSystem } = trpc.nautilusCore.getSystemStatus.useQuery(undefined, {
-    refetchInterval: 5000,
+    refetchInterval: false,
   });
 
   const { data: components, refetch: refetchComponents } = trpc.nautilusCore.getAllComponents.useQuery(undefined, {
-    refetchInterval: 5000,
+    refetchInterval: false,
   });
 
   const { data: systemMetrics, refetch: refetchMetrics } = trpc.nautilusCore.getSystemMetrics.useQuery(undefined, {
-    refetchInterval: 2000,
+    refetchInterval: false,
   });
 
   const { data: tradingMetrics } = trpc.nautilusCore.getTradingMetrics.useQuery(undefined, {
-    refetchInterval: 2000,
+    refetchInterval: false,
   });
 
   // New queries for feature and service management
   const { data: allFeatures } = trpc.nautilusCore.getAllFeatures.useQuery(undefined, {
-    refetchInterval: 30000, // Less frequent
+    refetchInterval: false,
   });
 
   const { data: featureStatusSummary } = trpc.nautilusCore.getFeatureStatusSummary.useQuery(undefined, {
-    refetchInterval: 30000,
+    refetchInterval: false,
   });
 
   const { data: allServices } = trpc.nautilusCore.getAllServices.useQuery(undefined, {
-    refetchInterval: 30000,
+    refetchInterval: false,
   });
 
   const { data: coreComponents } = trpc.nautilusCore.getCoreComponents.useQuery(undefined, {
-    refetchInterval: 10000,
+    refetchInterval: false,
   });
 
   const { data: componentHealthSummary } = trpc.nautilusCore.getComponentHealthSummary.useQuery(undefined, {
-    refetchInterval: 10000,
+    refetchInterval: false,
   });
 
   // Mutations
