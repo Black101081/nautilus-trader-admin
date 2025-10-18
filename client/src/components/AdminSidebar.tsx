@@ -12,6 +12,17 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Zap,
+  Key,
+  AlertTriangle,
+  TrendingUp,
+  Cpu,
+  Wifi,
+  Lock,
+  BookOpen,
+  FileText,
+  GitBranch,
+  Layers,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -20,6 +31,7 @@ interface NavItem {
   title: string;
   icon: any;
   href: string;
+  badge?: string;
 }
 
 interface NavSection {
@@ -29,36 +41,63 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    title: "System Management",
+    title: "Dashboard",
     items: [
       { title: "System Overview", icon: Server, href: "/admin/system" },
-      { title: "Core Management", icon: Activity, href: "/admin/core" },
+      { title: "Analytics", icon: BarChart3, href: "/admin/analytics" },
+    ],
+  },
+  {
+    title: "Nautilus Core",
+    items: [
+      { title: "Core Management", icon: Cpu, href: "/admin/core" },
       { title: "Component Health", icon: Activity, href: "/admin/health" },
-      { title: "Data Feeds", icon: Database, href: "/admin/feeds" },
+      { title: "Data Feeds", icon: Wifi, href: "/admin/feeds" },
+    ],
+  },
+  {
+    title: "Trading Operations",
+    items: [
+      { title: "Execution Management", icon: Zap, href: "/admin/execution" },
+      { title: "Risk Controls", icon: AlertTriangle, href: "/admin/risk" },
+      { title: "Broker Integration", icon: Layers, href: "/admin/brokers" },
+    ],
+  },
+  {
+    title: "Data & Storage",
+    items: [
       { title: "Database Management", icon: Database, href: "/admin/database" },
     ],
   },
   {
-    title: "User Management",
+    title: "User & Access",
     items: [
       { title: "Users & Roles", icon: Users, href: "/admin/users" },
-      { title: "Access Control", icon: Shield, href: "/admin/access" },
-      { title: "API Keys", icon: Settings, href: "/admin/api-keys" },
+      { title: "Access Control", icon: Lock, href: "/admin/access" },
+      { title: "API Keys", icon: Key, href: "/admin/api-keys" },
     ],
   },
   {
-    title: "Monitoring & Compliance",
+    title: "Monitoring",
     items: [
       { title: "Audit Logs", icon: FileCheck, href: "/admin/logs" },
-      { title: "Risk Controls", icon: Shield, href: "/admin/risk" },
-      { title: "Analytics", icon: BarChart3, href: "/admin/analytics" },
     ],
   },
   {
     title: "Configuration",
     items: [
       { title: "System Settings", icon: Settings, href: "/admin/settings" },
-      { title: "Broker Integration", icon: Database, href: "/admin/brokers" },
+    ],
+  },
+  {
+    title: "Documentation",
+    items: [
+      { title: "Getting Started", icon: BookOpen, href: "/admin/docs/getting-started" },
+      { title: "System Architecture", icon: GitBranch, href: "/admin/docs/architecture" },
+      { title: "Database Guide", icon: Database, href: "/admin/docs/database" },
+      { title: "API Reference", icon: FileText, href: "/admin/docs/api" },
+      { title: "User Guide", icon: Users, href: "/admin/docs/user-guide" },
+      { title: "Troubleshooting", icon: AlertTriangle, href: "/admin/docs/troubleshooting" },
     ],
   },
 ];
@@ -100,7 +139,7 @@ export function AdminSidebar() {
             </div>
             <div>
               <p className="text-sm font-semibold">Admin Panel</p>
-              <p className="text-xs text-muted-foreground">System Management</p>
+              <p className="text-xs text-muted-foreground">NautilusTrader</p>
             </div>
           </div>
         )}
@@ -144,7 +183,14 @@ export function AdminSidebar() {
                       )}
                     >
                       <Icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-500")} />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!collapsed && (
+                        <span className="flex-1 text-left">{item.title}</span>
+                      )}
+                      {!collapsed && item.badge && (
+                        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-500">
+                          {item.badge}
+                        </span>
+                      )}
                     </button>
                   );
                 })}

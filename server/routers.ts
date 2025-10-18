@@ -501,6 +501,182 @@ print(json.dumps(result))
         await db.delete(users).where(eq(users.id, input.id));
         return { success: true };
       }),
+
+    // Redis Management
+    getRedisInfo: publicProcedure.query(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from redis_manager import get_redis_info
+print(json.dumps(get_redis_info()))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve({ connected: false, error: "Failed to parse output" });
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve({ connected: false, error: "Timeout" }); }, 5000);
+      });
+    }),
+
+    getRedisKeyspaceStats: publicProcedure.query(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from redis_manager import get_redis_keyspace_stats, get_redis_cache_hit_rate
+result = {
+  "keyspaces": get_redis_keyspace_stats(),
+  "hit_rate": get_redis_cache_hit_rate()
+}
+print(json.dumps(result))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve({ keyspaces: [], hit_rate: 0 });
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve({ keyspaces: [], hit_rate: 0 }); }, 5000);
+      });
+    }),
+
+    flushRedisCache: publicProcedure.mutation(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from redis_manager import flush_redis_db
+result = flush_redis_db()
+print(json.dumps({"success": result}))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve({ success: false });
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve({ success: false }); }, 5000);
+      });
+    }),
+
+    // PostgreSQL Management
+    getPostgresInfo: publicProcedure.query(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from postgres_manager import get_postgres_info
+print(json.dumps(get_postgres_info()))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve({ connected: false, error: "Failed to parse output" });
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve({ connected: false, error: "Timeout" }); }, 5000);
+      });
+    }),
+
+    getPostgresTables: publicProcedure.query(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from postgres_manager import get_postgres_tables
+print(json.dumps(get_postgres_tables()))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve([]);
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve([]); }, 5000);
+      });
+    }),
+
+    // Parquet Management
+    getParquetOverview: publicProcedure.query(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from parquet_manager import get_parquet_overview
+print(json.dumps(get_parquet_overview()))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve({ total_files: 0, total_size: "0 B" });
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve({ total_files: 0, total_size: "0 B" }); }, 5000);
+      });
+    }),
+
+    listParquetDirectories: publicProcedure.query(async () => {
+      return new Promise((resolve) => {
+        const pythonPath = "python3.11";
+        const code = `
+import json
+import sys
+sys.path.append('/home/ubuntu/nautilus-trader-demo/server')
+from parquet_manager import list_parquet_directories
+print(json.dumps(list_parquet_directories()))
+`;
+        const proc = spawn(pythonPath, ["-c", code]);
+        let output = "";
+        proc.stdout.on("data", (data) => { output += data.toString(); });
+        proc.on("close", () => {
+          try {
+            resolve(JSON.parse(output));
+          } catch (e) {
+            resolve([]);
+          }
+        });
+        setTimeout(() => { proc.kill(); resolve([]); }, 5000);
+      });
+    }),
   }),
 
   // Risk Management
@@ -725,6 +901,69 @@ print(json.dumps(result))
         return JSON.parse(stdout.trim());
       } catch (error: any) {
         return { success: false, message: error.message };
+      }
+    }),
+
+    // Feature and Service Management
+    getAllFeatures: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.feature_manager import get_all_features; import json; print(json.dumps(get_all_features()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { features: [], total: 0, categories: [] };
+      }
+    }),
+
+    getFeaturesByCategory: publicProcedure
+      .input(z.object({ category: z.string() }))
+      .query(async ({ input }) => {
+        try {
+          const projectRoot = path.join(__dirname, "..");
+          const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.feature_manager import get_features_by_category; import json; print(json.dumps(get_features_by_category('${input.category}')))"`);
+          return JSON.parse(stdout.trim());
+        } catch (error: any) {
+          return [];
+        }
+      }),
+
+    getFeatureStatusSummary: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.feature_manager import get_feature_status_summary; import json; print(json.dumps(get_feature_status_summary()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { available: 0, configured: 0, requires_config: 0, requires_data: 0 };
+      }
+    }),
+
+    getAllServices: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.feature_manager import get_all_services; import json; print(json.dumps(get_all_services()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { services: [], total: 0 };
+      }
+    }),
+
+    getCoreComponents: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.feature_manager import get_core_components; import json; print(json.dumps(get_core_components()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return [];
+      }
+    }),
+
+    getComponentHealthSummary: publicProcedure.query(async () => {
+      try {
+        const projectRoot = path.join(__dirname, "..");
+        const { stdout } = await exec(`cd ${projectRoot} && python3.11 -c "from server.feature_manager import get_component_health_summary; import json; print(json.dumps(get_component_health_summary()))"`);
+        return JSON.parse(stdout.trim());
+      } catch (error: any) {
+        return { healthy: 0, degraded: 0, unhealthy: 0, stopped: 0 };
       }
     }),
   }),

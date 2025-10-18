@@ -41,6 +41,13 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminSettings from "./pages/AdminSettings";
 import AdminBrokers from "./pages/AdminBrokers";
 import AdminDatabase from "./pages/AdminDatabase";
+import AdminExecution from "./pages/AdminExecution";
+import DocsGettingStarted from "./pages/DocsGettingStarted";
+import DocsArchitecture from "./pages/DocsArchitecture";
+import DocsDatabase from "./pages/DocsDatabase";
+import DocsAPI from "./pages/DocsAPI";
+import DocsUserGuide from "./pages/DocsUserGuide";
+import DocsTroubleshooting from "./pages/DocsTroubleshooting";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -84,6 +91,13 @@ function Router() {
       <Route path={"/admin/settings"} component={AdminSettings} />
       <Route path={"/admin/brokers"} component={AdminBrokers} />
       <Route path={"/admin/database"} component={AdminDatabase} />
+      <Route path={"/admin/execution"} component={AdminExecution} />
+      <Route path={"/admin/docs/getting-started"} component={DocsGettingStarted} />
+      <Route path={"/admin/docs/architecture"} component={DocsArchitecture} />
+      <Route path={"/admin/docs/database"} component={DocsDatabase} />
+      <Route path={"/admin/docs/api"} component={DocsAPI} />
+      <Route path={"/admin/docs/user-guide"} component={DocsUserGuide} />
+      <Route path={"/admin/docs/troubleshooting"} component={DocsTroubleshooting} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
