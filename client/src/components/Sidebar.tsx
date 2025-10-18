@@ -23,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -86,11 +86,11 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "System",
+    title: "Admin - System Management",
     adminOnly: true,
     items: [
+      { title: "System Overview", icon: Server, href: "/admin/system" },
       { title: "User Management", icon: Users, href: "/admin/users" },
-      { title: "System Health", icon: Server, href: "/admin/health" },
       { title: "Audit Logs", icon: FileCheck, href: "/admin/logs" },
       { title: "Configuration", icon: Settings, href: "/admin/config" },
     ],
@@ -108,6 +108,22 @@ const navSections: NavSection[] = [
 export function Sidebar() {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile and auto-collapse
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setCollapsed(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
 
@@ -115,7 +131,8 @@ export function Sidebar() {
     <aside
       className={cn(
         "fixed left-0 top-0 z-40 h-screen border-r border-border/40 bg-background/95 backdrop-blur transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        collapsed ? "w-16" : "w-64",
+        isMobile && !collapsed && "shadow-2xl"
       )}
     >
       {/* Header */}

@@ -15,6 +15,19 @@ import TraderDashboard from "./pages/TraderDashboard";
 import LiveTrading from "./pages/LiveTrading";
 import LiveTradingNew from "./pages/LiveTradingNew";
 import AdvancedBacktest from "./pages/AdvancedBacktest";
+import Portfolio from "./pages/Portfolio";
+import MarketWatch from "./pages/MarketWatch";
+import Positions from "./pages/Positions";
+import Orders from "./pages/Orders";
+import TradeHistory from "./pages/TradeHistory";
+import WalkForward from "./pages/WalkForward";
+import Optimization from "./pages/Optimization";
+import StrategyLibrary from "./pages/StrategyLibrary";
+import DeployStrategy from "./pages/DeployStrategy";
+import Performance from "./pages/Performance";
+import RiskAnalysis from "./pages/RiskAnalysis";
+import TradeJournal from "./pages/TradeJournal";
+import AdminSystem from "./pages/AdminSystem";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -31,6 +44,20 @@ function Router() {
       <Route path={"/live"} component={LiveTradingNew} />
       <Route path={"/live-old"} component={LiveTrading} />
       <Route path={"/advanced-backtest"} component={AdvancedBacktest} />
+      <Route path={"/portfolio"} component={Portfolio} />
+      <Route path={"/market"} component={MarketWatch} />
+      <Route path={"/positions"} component={Positions} />
+      <Route path={"/orders"} component={Orders} />
+      <Route path={"/trades"} component={TradeHistory} />
+      <Route path={"/walk-forward"} component={WalkForward} />
+      <Route path={"/optimization"} component={Optimization} />
+      <Route path={"/library"} component={StrategyLibrary} />
+      <Route path={"/deploy"} component={DeployStrategy} />
+      <Route path={"/performance"} component={Performance} />
+      <Route path={"/risk"} component={RiskAnalysis} />
+      <Route path={"/journal"} component={TradeJournal} />
+      <Route path={"/builder"} component={StrategyBuilder} />
+      <Route path={"/admin/system"} component={AdminSystem} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
