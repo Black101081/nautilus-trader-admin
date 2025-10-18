@@ -44,7 +44,7 @@ const navSections: NavSection[] = [
   {
     title: "Dashboard",
     items: [
-      { title: "Overview", icon: LayoutDashboard, href: "/" },
+      { title: "Overview", icon: LayoutDashboard, href: "/dashboard" },
       { title: "Portfolio", icon: TrendingUp, href: "/portfolio" },
       { title: "Market Watch", icon: Activity, href: "/market" },
     ],

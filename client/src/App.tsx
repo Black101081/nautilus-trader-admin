@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import Landing from "./pages/Landing";
 import Demo from "./pages/Demo";
 import Docs from "./pages/Docs";
 import StrategyBuilder from "./pages/StrategyBuilder";
@@ -33,7 +34,8 @@ function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Dashboard} />
+      <Route path={"/"} component={Landing} />
+      <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/home"} component={Home} />
       <Route path={"/demo"} component={Demo} />
       <Route path={"/strategies"} component={StrategyBuilder} />
