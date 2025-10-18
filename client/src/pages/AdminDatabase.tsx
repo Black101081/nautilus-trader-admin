@@ -353,14 +353,20 @@ export default function AdminDatabase() {
                     </tr>
                   </thead>
                   <tbody>
-                    {redisData.keyspaces.map((ks: any) => (
+                    {Array.isArray(redisData.keyspaces) && redisData.keyspaces.length > 0 ? redisData.keyspaces.map((ks: any) => (
                       <tr key={ks.db} className="border-b hover:bg-muted/50">
                         <td className="py-3 px-4 font-medium">{ks.db}</td>
                         <td className="py-3 px-4 text-right font-mono">{ks.keys.toLocaleString()}</td>
                         <td className="py-3 px-4 text-right font-mono">{ks.expires}</td>
                         <td className="py-3 px-4 text-right font-mono">{ks.avgTtl}</td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan={4} className="text-center py-8 text-muted-foreground">
+                          No keyspaces found
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </CardContent>
@@ -452,25 +458,33 @@ export default function AdminDatabase() {
                     </tr>
                   </thead>
                   <tbody>
-                    {postgresData.tables.map((table: any) => (
-                      <tr key={table.name} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4 font-medium font-mono text-sm">
-                          {table.name}
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge variant="default">{table.type}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-right font-mono text-sm">
-                          {table.records.toLocaleString()}
-                        </td>
-                        <td className="py-3 px-4 text-right text-sm text-muted-foreground">
-                          {table.size}
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <Button variant="ghost" size="sm">View</Button>
+                    {Array.isArray(postgresData.tables) && postgresData.tables.length > 0 ? (
+                      postgresData.tables.map((table: any) => (
+                        <tr key={table.name} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4 font-medium font-mono text-sm">
+                            {table.name}
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="default">{table.type}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-right font-mono text-sm">
+                            {table.records?.toLocaleString() || 0}
+                          </td>
+                          <td className="py-3 px-4 text-right text-sm text-muted-foreground">
+                            {table.size || 'N/A'}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <Button variant="ghost" size="sm">View</Button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No tables found
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </CardContent>
@@ -513,7 +527,7 @@ export default function AdminDatabase() {
                   </Button>
                 </div>
 
-                    {parquetData.directories.map((dir: any) => (
+                    {Array.isArray(parquetData.directories) && parquetData.directories.length > 0 ? parquetData.directories.map((dir: any) => (
                   <div key={dir.name} className="mb-6">
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -535,7 +549,7 @@ export default function AdminDatabase() {
                           </tr>
                         </thead>
                         <tbody>
-                                {dir.files.map((file: any) => (
+                                {Array.isArray(dir.files) && dir.files.length > 0 ? dir.files.map((file: any) => (
                             <tr key={file.name} className="border-b hover:bg-muted/50">
                               <td className="py-2 px-3 font-mono text-sm">{file.name}</td>
                               <td className="py-2 px-3 text-right text-sm">{file.size}</td>
@@ -556,7 +570,13 @@ export default function AdminDatabase() {
                                 </div>
                               </td>
                             </tr>
-                          ))}
+                          )) : (
+                            <tr>
+                              <td colSpan={5} className="text-center py-4 text-muted-foreground text-sm">
+                                No files
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     ) : (
@@ -565,7 +585,12 @@ export default function AdminDatabase() {
                       </div>
                     )}
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No parquet directories found</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
