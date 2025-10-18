@@ -30,6 +30,7 @@ import RiskAnalysis from "./pages/RiskAnalysis";
 import TradeJournal from "./pages/TradeJournal";
 import AdminSystem from "./pages/AdminSystem";
 import AdminCoreManagement from "./pages/AdminCoreManagement";
+import AdminCoreTest from "./pages/AdminCoreTest";
 import AdminHealth from "./pages/AdminHealth";
 import AdminFeeds from "./pages/AdminFeeds";
 import AdminUsers from "./pages/AdminUsers";
@@ -82,6 +83,7 @@ function Router() {
 
       <Route path={"/admin/system"} component={AdminSystem} />
       <Route path={"/admin/core"} component={AdminCoreManagement} />
+      <Route path={"/admin/core-test"} component={AdminCoreTest} />
       <Route path={"/admin/health"} component={AdminHealth} />
       <Route path={"/admin/feeds"} component={AdminFeeds} />
       <Route path={"/admin/users"} component={AdminUsers} />

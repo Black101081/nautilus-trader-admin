@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request, Response } from 'express';
 
 /**
@@ -104,7 +104,9 @@ export const createUserRateLimit = (maxRequests: number, windowMinutes: number) 
     keyGenerator: (req: Request) => {
       // Use user ID from JWT token if available, otherwise fall back to IP
       const user = (req as any).user;
-      return user?.userId || req.ip || 'unknown';
+      if (user?.userId) return user.userId;
+      // Use ipKeyGenerator helper for proper IPv6 handling
+      return ipKeyGenerator(req);
     },
     handler: (req: Request, res: Response) => {
       res.status(429).json({

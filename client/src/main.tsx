@@ -41,6 +41,7 @@ const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
+      maxURLLength: 0, // Disable batching - force individual requests
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

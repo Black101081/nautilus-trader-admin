@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { trpc } from "@/lib/trpc";
 import {
   Activity,
   Server,
@@ -24,61 +23,133 @@ import {
   Filter,
 } from "lucide-react";
 
+interface SystemStatus {
+  status: string;
+  version: string;
+  uptime_seconds: number;
+  uptime_formatted: string;
+  timestamp: string;
+  nautilus_available: boolean;
+}
+
+interface Component {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  health: string;
+  description: string;
+}
+
+interface Feature {
+  id: string;
+  name: string;
+  category: string;
+  enabled: boolean;
+  description: string;
+  status?: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  category: string;
+  status: string;
+  description: string;
+}
+
+interface FeatureStatusSummary {
+  available: number;
+  configured: number;
+  requires_config: number;
+  requires_data: number;
+}
+
+interface ComponentHealthSummary {
+  healthy: number;
+  degraded: number;
+  unhealthy: number;
+}
+
 export default function AdminCoreManagement() {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Existing queries
-  const { data: systemStatus, refetch: refetchSystem } = trpc.nautilusCore.getSystemStatus.useQuery(undefined, {
-    refetchInterval: false,
-  });
+  // State for all data
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [components, setComponents] = useState<Component[]>([]);
+  const [allFeatures, setAllFeatures] = useState<{ features: Feature[]; total: number; categories: string[] } | null>(null);
+  const [featureStatusSummary, setFeatureStatusSummary] = useState<FeatureStatusSummary | null>(null);
+  const [allServices, setAllServices] = useState<{ services: Service[]; total: number } | null>(null);
+  const [coreComponents, setCoreComponents] = useState<Component[]>([]);
+  const [componentHealthSummary, setComponentHealthSummary] = useState<ComponentHealthSummary | null>(null);
 
-  const { data: components, refetch: refetchComponents } = trpc.nautilusCore.getAllComponents.useQuery(undefined, {
-    refetchInterval: false,
-  });
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Fetch all data in parallel using direct fetch API
+      const [
+        statusRes,
+        componentsRes,
+        featuresRes,
+        featureSummaryRes,
+        servicesRes,
+        coreComponentsRes,
+        healthSummaryRes,
+      ] = await Promise.all([
+        fetch('/api/trpc/nautilusCore.getSystemStatus').then(r => r.json()),
+        fetch('/api/trpc/nautilusCore.getAllComponents').then(r => r.json()),
+        fetch('/api/trpc/nautilusCore.getAllFeatures').then(r => r.json()),
+        fetch('/api/trpc/nautilusCore.getFeatureStatusSummary').then(r => r.json()),
+        fetch('/api/trpc/nautilusCore.getAllServices').then(r => r.json()),
+        fetch('/api/trpc/nautilusCore.getCoreComponents').then(r => r.json()),
+        fetch('/api/trpc/nautilusCore.getComponentHealthSummary').then(r => r.json()),
+      ]);
 
-  const { data: systemMetrics, refetch: refetchMetrics } = trpc.nautilusCore.getSystemMetrics.useQuery(undefined, {
-    refetchInterval: false,
-  });
+      // Extract data from tRPC response format
+      setSystemStatus(statusRes.result?.data?.json || null);
+      setComponents(componentsRes.result?.data?.json || []);
+      setAllFeatures(featuresRes.result?.data?.json || { features: [], total: 0, categories: [] });
+      setFeatureStatusSummary(featureSummaryRes.result?.data?.json || null);
+      setAllServices(servicesRes.result?.data?.json || { services: [], total: 0 });
+      setCoreComponents(coreComponentsRes.result?.data?.json || []);
+      setComponentHealthSummary(healthSummaryRes.result?.data?.json || null);
 
-  const { data: tradingMetrics } = trpc.nautilusCore.getTradingMetrics.useQuery(undefined, {
-    refetchInterval: false,
-  });
+      setIsLoading(false);
+    } catch (err: any) {
+      console.error('Failed to fetch data:', err);
+      setError(err.message || 'Failed to load data');
+      setIsLoading(false);
+    }
+  };
 
-  // New queries for feature and service management
-  const { data: allFeatures } = trpc.nautilusCore.getAllFeatures.useQuery(undefined, {
-    refetchInterval: false,
-  });
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const { data: featureStatusSummary } = trpc.nautilusCore.getFeatureStatusSummary.useQuery(undefined, {
-    refetchInterval: false,
-  });
+  const handleRefresh = () => {
+    fetchData();
+  };
 
-  const { data: allServices } = trpc.nautilusCore.getAllServices.useQuery(undefined, {
-    refetchInterval: false,
-  });
-
-  const { data: coreComponents } = trpc.nautilusCore.getCoreComponents.useQuery(undefined, {
-    refetchInterval: false,
-  });
-
-  const { data: componentHealthSummary } = trpc.nautilusCore.getComponentHealthSummary.useQuery(undefined, {
-    refetchInterval: false,
-  });
-
-  // Mutations
-  const restartMutation = trpc.nautilusCore.restartComponent.useMutation({
-    onSuccess: () => {
-      refetchComponents();
-    },
-  });
-
-  const emergencyStopMutation = trpc.nautilusCore.emergencyStopAll.useMutation({
-    onSuccess: () => {
-      refetchSystem();
-      refetchComponents();
-    },
-  });
+  const handleEmergencyStop = async () => {
+    try {
+      const response = await fetch('/api/trpc/nautilusCore.emergencyStopAll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const result = await response.json();
+      if (result.result?.data?.json?.success) {
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Emergency stop failed:', err);
+    }
+  };
 
   const getComponentIcon = (name: string) => {
     const icons: Record<string, any> = {
@@ -132,7 +203,35 @@ export default function AdminCoreManagement() {
   // Filter features by category
   const filteredFeatures = selectedCategory === "all" 
     ? allFeatures?.features || []
-    : (allFeatures?.features || []).filter((f: any) => f.category === selectedCategory);
+    : (allFeatures?.features || []).filter((f: Feature) => f.category === selectedCategory);
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading Nautilus Core data...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+            <p className="text-red-500 font-semibold mb-2">Error loading data</p>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={fetchData}>Retry</Button>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -148,19 +247,14 @@ export default function AdminCoreManagement() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              onClick={() => {
-                refetchSystem();
-                refetchComponents();
-                refetchMetrics();
-              }}
+              onClick={handleRefresh}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
             <Button
               variant="destructive"
-              onClick={() => emergencyStopMutation.mutate()}
-              disabled={emergencyStopMutation.isPending}
+              onClick={handleEmergencyStop}
             >
               <Square className="h-4 w-4 mr-2" />
               Emergency Stop
@@ -180,7 +274,7 @@ export default function AdminCoreManagement() {
                 {systemStatus?.status === "running" ? "Running" : "Stopped"}
               </div>
               <p className="text-xs text-muted-foreground">
-                {systemStatus?.uptime || "N/A"}
+                {systemStatus?.uptime_formatted || "N/A"}
               </p>
             </CardContent>
           </Card>
@@ -192,7 +286,7 @@ export default function AdminCoreManagement() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {componentHealthSummary?.healthy || 0}/{(coreComponents || []).length}
+                {componentHealthSummary?.healthy || 0}/{coreComponents.length}
               </div>
               <p className="text-xs text-muted-foreground">
                 {componentHealthSummary?.healthy || 0} healthy
@@ -249,7 +343,7 @@ export default function AdminCoreManagement() {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {(coreComponents || []).map((component: any) => {
+                  {coreComponents.map((component: Component) => {
                     const Icon = getComponentIcon(component.id);
                     return (
                       <Card key={component.id} className="border-2">
@@ -273,35 +367,8 @@ export default function AdminCoreManagement() {
                             <span className="text-muted-foreground">Type</span>
                             <span className="font-medium">{component.type}</span>
                           </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Uptime</span>
-                            <span className="font-medium">{component.uptime}</span>
-                          </div>
-                          <div className="text-xs text-muted-foreground pt-2">
+                          <div className="text-sm text-muted-foreground">
                             {component.description}
-                          </div>
-                          {component.dependencies && component.dependencies.length > 0 && (
-                            <div className="pt-2">
-                              <div className="text-xs font-medium mb-1">Dependencies:</div>
-                              <div className="flex flex-wrap gap-1">
-                                {component.dependencies.map((dep: string) => (
-                                  <Badge key={dep} variant="outline" className="text-xs">
-                                    {dep}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          <div className="pt-2 flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => restartMutation.mutate({ component: component.id })}
-                              disabled={restartMutation.isPending}
-                            >
-                              <RefreshCw className="h-3 w-3 mr-1" />
-                              Restart
-                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -318,113 +385,53 @@ export default function AdminCoreManagement() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Nautilus Features</CardTitle>
+                    <CardTitle>Features</CardTitle>
                     <CardDescription>
-                      All {allFeatures?.total || 0} features across {allFeatures?.categories?.length || 0} categories
+                      Available Nautilus Trader features ({allFeatures?.total || 0} total)
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <select
-                      className="px-3 py-2 border rounded-md text-sm"
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
+                    <Button
+                      variant={selectedCategory === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedCategory("all")}
                     >
-                      <option value="all">All Categories</option>
-                      {(allFeatures?.categories || []).map((cat: string) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                      All
+                    </Button>
+                    {allFeatures?.categories.map((cat) => (
+                      <Button
+                        key={cat}
+                        variant={selectedCategory === cat ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedCategory(cat)}
+                      >
+                        {cat}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                {/* Feature Status Summary */}
-                <div className="grid gap-4 md:grid-cols-4 mb-6">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold text-green-600">
-                        {featureStatusSummary?.available || 0}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Available</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {featureStatusSummary?.configured || 0}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Configured</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold text-yellow-600">
-                        {featureStatusSummary?.requires_config || 0}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Requires Config</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-2xl font-bold text-orange-600">
-                        {featureStatusSummary?.requires_data || 0}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Requires Data</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Features List */}
-                <div className="space-y-3">
-                  {filteredFeatures.map((feature: any) => (
-                    <Card key={feature.id} className="border-l-4" style={{
-                      borderLeftColor: 
-                        feature.status === "available" ? "#10b981" :
-                        feature.status === "configured" ? "#3b82f6" :
-                        feature.status === "requires_config" ? "#f59e0b" : "#f97316"
-                    }}>
-                      <CardHeader className="pb-3">
+                <div className="grid gap-3 md:grid-cols-3">
+                  {filteredFeatures.map((feature: Feature) => (
+                    <Card key={feature.id} className="border">
+                      <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle className="text-base">{feature.name}</CardTitle>
-                            <CardDescription className="text-xs">{feature.category}</CardDescription>
-                          </div>
-                          {getStatusBadge(feature.status)}
+                          <CardTitle className="text-sm">{feature.name}</CardTitle>
+                          {feature.enabled ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-gray-400" />
+                          )}
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-2">
-                        {feature.dependencies && feature.dependencies.length > 0 && (
-                          <div>
-                            <div className="text-xs font-medium mb-1">Dependencies:</div>
-                            <div className="flex flex-wrap gap-1">
-                              {feature.dependencies.map((dep: string) => (
-                                <Badge key={dep} variant="outline" className="text-xs">
-                                  {dep}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {feature.services && feature.services.length > 0 && (
-                          <div>
-                            <div className="text-xs font-medium mb-1">Services:</div>
-                            <div className="flex flex-wrap gap-1">
-                              {feature.services.map((svc: string) => (
-                                <Badge key={svc} variant="secondary" className="text-xs">
-                                  {svc.replace(/_/g, " ")}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {feature.required_for && feature.required_for.length > 0 && (
-                          <div>
-                            <div className="text-xs font-medium mb-1">Required For:</div>
-                            <div className="text-xs text-muted-foreground">
-                              {feature.required_for.join(", ")}
-                            </div>
-                          </div>
-                        )}
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {feature.description}
+                        </p>
+                        <Badge variant="outline" className="text-xs">
+                          {feature.category}
+                        </Badge>
                       </CardContent>
                     </Card>
                   ))}
@@ -437,27 +444,32 @@ export default function AdminCoreManagement() {
           <TabsContent value="services" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Nautilus Services</CardTitle>
+                <CardTitle>Services</CardTitle>
                 <CardDescription>
-                  All {allServices?.total || 0} services provided by Nautilus Core
+                  Available Nautilus Trader services ({allServices?.total || 0} total)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3 md:grid-cols-2">
-                  {(allServices?.services || []).map((service: any) => (
+                  {allServices?.services.map((service: Service) => (
                     <Card key={service.id} className="border">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base">{service.name}</CardTitle>
-                        <CardDescription className="text-xs">{service.category}</CardDescription>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-sm">{service.name}</CardTitle>
+                          <Settings className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-xs font-medium mb-2">Provided by:</div>
-                        <div className="flex flex-wrap gap-1">
-                          {service.provided_by.map((provider: string) => (
-                            <Badge key={provider} variant="outline" className="text-xs">
-                              {provider}
-                            </Badge>
-                          ))}
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {service.description}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="text-xs">
+                            {service.category}
+                          </Badge>
+                          <Badge className="text-xs bg-green-500">
+                            {service.status}
+                          </Badge>
                         </div>
                       </CardContent>
                     </Card>
@@ -469,85 +481,67 @@ export default function AdminCoreManagement() {
 
           {/* Metrics Tab */}
           <TabsContent value="metrics" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* System Metrics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Metrics</CardTitle>
-                  <CardDescription>Core system performance metrics</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">CPU Usage</span>
-                      <span className="font-medium">{systemMetrics?.cpu_usage || 0}%</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${systemMetrics?.cpu_usage || 0}%` }}
-                      />
-                    </div>
-                  </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>System Metrics</CardTitle>
+                <CardDescription>
+                  Real-time system and trading metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card className="border">
+                    <CardHeader>
+                      <CardTitle className="text-sm">Feature Status</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Available</span>
+                        <span className="font-medium">{featureStatusSummary?.available || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Configured</span>
+                        <span className="font-medium">{featureStatusSummary?.configured || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Requires Config</span>
+                        <span className="font-medium">{featureStatusSummary?.requires_config || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Requires Data</span>
+                        <span className="font-medium">{featureStatusSummary?.requires_data || 0}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Memory Usage</span>
-                      <span className="font-medium">{systemMetrics?.memory_usage || 0}%</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className="bg-primary h-2 rounded-full"
-                        style={{ width: `${systemMetrics?.memory_usage || 0}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Event Queue</span>
-                      <span className="font-medium">{systemMetrics?.event_queue_size || 0}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Messages/sec</span>
-                      <span className="font-medium">{systemMetrics?.messages_per_second || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Trading Metrics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Trading Metrics</CardTitle>
-                  <CardDescription>Live trading performance metrics</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Active Orders</span>
-                    <span className="text-2xl font-bold">{tradingMetrics?.active_orders || 0}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Open Positions</span>
-                    <span className="text-2xl font-bold">{tradingMetrics?.open_positions || 0}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Orders Today</span>
-                    <span className="text-2xl font-bold">{tradingMetrics?.orders_today || 0}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Fill Rate</span>
-                    <span className="text-2xl font-bold">{tradingMetrics?.fill_rate || 0}%</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <Card className="border">
+                    <CardHeader>
+                      <CardTitle className="text-sm">Component Health</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Healthy</span>
+                        <span className="font-medium text-green-500">
+                          {componentHealthSummary?.healthy || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Degraded</span>
+                        <span className="font-medium text-yellow-500">
+                          {componentHealthSummary?.degraded || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Unhealthy</span>
+                        <span className="font-medium text-red-500">
+                          {componentHealthSummary?.unhealthy || 0}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
