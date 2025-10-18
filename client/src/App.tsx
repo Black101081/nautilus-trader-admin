@@ -30,6 +30,16 @@ import RiskAnalysis from "./pages/RiskAnalysis";
 import TradeJournal from "./pages/TradeJournal";
 import AdminSystem from "./pages/AdminSystem";
 import AdminCoreManagement from "./pages/AdminCoreManagement";
+import AdminHealth from "./pages/AdminHealth";
+import AdminFeeds from "./pages/AdminFeeds";
+import AdminUsers from "./pages/AdminUsers";
+import AdminAccess from "./pages/AdminAccess";
+import AdminAPIKeys from "./pages/AdminAPIKeys";
+import AdminLogs from "./pages/AdminLogs";
+import AdminRisk from "./pages/AdminRisk";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
+import AdminBrokers from "./pages/AdminBrokers";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -62,6 +72,16 @@ function Router() {
       <Route path={"/builder"} component={StrategyBuilder} />
       <Route path={"/admin/system"} component={AdminSystem} />
       <Route path={"/admin/core"} component={AdminCoreManagement} />
+      <Route path={"/admin/health"} component={AdminHealth} />
+      <Route path={"/admin/feeds"} component={AdminFeeds} />
+      <Route path={"/admin/users"} component={AdminUsers} />
+      <Route path={"/admin/access"} component={AdminAccess} />
+      <Route path={"/admin/api-keys"} component={AdminAPIKeys} />
+      <Route path={"/admin/logs"} component={AdminLogs} />
+      <Route path={"/admin/risk"} component={AdminRisk} />
+      <Route path={"/admin/analytics"} component={AdminAnalytics} />
+      <Route path={"/admin/settings"} component={AdminSettings} />
+      <Route path={"/admin/brokers"} component={AdminBrokers} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
