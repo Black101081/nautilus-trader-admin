@@ -313,6 +313,47 @@ class NautilusCoreManager:
             "packets_recv": net_io.packets_recv
         }
 
+
+# Global instance
+nautilus_manager = NautilusCoreManager()
+
+
+# Convenience functions for use in routers
+def get_system_status():
+    return nautilus_manager.get_system_status()
+
+def get_component_status(component_name: str):
+    return nautilus_manager.get_component_status(component_name)
+
+def get_all_components():
+    return nautilus_manager.get_all_components()
+
+def get_system_metrics():
+    return nautilus_manager.get_system_metrics()
+
+def get_trading_metrics():
+    return nautilus_manager.get_trading_metrics()
+
+def get_logs(component: Optional[str] = None, level: str = "INFO", limit: int = 100):
+    return nautilus_manager.get_logs(component, level, limit)
+
+def restart_component(component_name: str):
+    return nautilus_manager.restart_component(component_name)
+
+def stop_component(component_name: str):
+    return nautilus_manager.stop_component(component_name)
+
+def start_component(component_name: str):
+    return nautilus_manager.start_component(component_name)
+
+def get_adapters():
+    return nautilus_manager.get_adapters()
+
+def emergency_stop_all():
+    return nautilus_manager.emergency_stop_all()
+
+
+
     def get_all_features(self) -> List[Dict[str, Any]]:
         """
         Get all 64 Nautilus features categorized by type
@@ -555,74 +596,52 @@ class NautilusCoreManager:
         return logs
 
 
-
-
-
 # Global instance
-nautilus_manager = NautilusCoreManager()
+_manager = NautilusCoreManager()
 
-
-# Convenience functions for use in routers
+# Export functions for easy import
 def get_system_status():
-    return nautilus_manager.get_system_status()
-
-def get_component_status(component_name: str):
-    return nautilus_manager.get_component_status(component_name)
+    return _manager.get_system_status()
 
 def get_all_components():
-    return nautilus_manager.get_all_components()
+    return _manager.get_all_components()
+
+def get_component_status(component_name: str):
+    return _manager.get_component_status(component_name)
 
 def get_system_metrics():
-    return nautilus_manager.get_system_metrics()
+    return _manager.get_system_metrics()
 
 def get_trading_metrics():
-    return nautilus_manager.get_trading_metrics()
-
-def get_logs(component: Optional[str] = None, level: str = "INFO", limit: int = 100):
-    return nautilus_manager.get_logs(component, level, limit)
+    return _manager.get_trading_metrics()
 
 def restart_component(component_name: str):
-    return nautilus_manager.restart_component(component_name)
+    return _manager.restart_component(component_name)
 
-def stop_component(component_name: str):
-    return nautilus_manager.stop_component(component_name)
-
-def start_component(component_name: str):
-    return nautilus_manager.start_component(component_name)
-
-def get_adapters():
-    return nautilus_manager.get_adapters()
-
-def emergency_stop_all():
-    return nautilus_manager.emergency_stop_all()
-
-
-
-# Export new feature and service management functions
 def get_all_features():
-    return nautilus_manager.get_all_features()
+    return _manager.get_all_features()
 
 def get_all_services():
-    return nautilus_manager.get_all_services()
+    return _manager.get_all_services()
 
 def toggle_feature(feature_id: str, enabled: bool):
-    return nautilus_manager.toggle_feature(feature_id, enabled)
+    return _manager.toggle_feature(feature_id, enabled)
 
 def get_feature_config(feature_id: str):
-    return nautilus_manager.get_feature_config(feature_id)
+    return _manager.get_feature_config(feature_id)
 
 def update_feature_config(feature_id: str, config: dict):
-    return nautilus_manager.update_feature_config(feature_id, config)
+    return _manager.update_feature_config(feature_id, config)
 
 def start_service(service_id: str):
-    return nautilus_manager.start_service(service_id)
+    return _manager.start_service(service_id)
 
 def stop_service(service_id: str):
-    return nautilus_manager.stop_service(service_id)
+    return _manager.stop_service(service_id)
 
 def get_service_status(service_id: str):
-    return nautilus_manager.get_service_status(service_id)
+    return _manager.get_service_status(service_id)
 
 def get_service_logs(service_id: str, limit: int = 100):
-    return nautilus_manager.get_service_logs(service_id, limit)
+    return _manager.get_service_logs(service_id, limit)
 

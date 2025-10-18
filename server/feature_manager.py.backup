@@ -1,25 +1,12 @@
 """
 Nautilus Core Feature and Service Management
 Backend module for managing Nautilus features, components, and services
-Updated to use nautilus_bridge as primary data source with JSON fallback
 """
 
 import json
 from typing import Dict, List, Any
 
-# Import from nautilus_bridge for real data
-try:
-    from server.nautilus_bridge import (
-        get_all_features as _get_all_features_real,
-        get_all_services as _get_all_services_real,
-        get_all_components as _get_all_components_real,
-    )
-    BRIDGE_AVAILABLE = True
-except ImportError:
-    BRIDGE_AVAILABLE = False
-    print("Warning: nautilus_bridge not available, using fallback data")
-
-# Load feature dependencies from analysis (fallback)
+# Load feature dependencies from analysis
 def load_feature_dependencies() -> Dict:
     """Load feature dependencies from JSON file"""
     try:
@@ -32,29 +19,6 @@ def load_feature_dependencies() -> Dict:
 # Feature management functions
 def get_all_features() -> Dict[str, Any]:
     """Get all Nautilus Core features with their status and dependencies"""
-    # Try to get real data from nautilus_bridge first
-    if BRIDGE_AVAILABLE:
-        try:
-            features = _get_all_features_real()
-            
-            # Group by category
-            categories = {}
-            for feature in features:
-                category = feature["category"]
-                if category not in categories:
-                    categories[category] = []
-                categories[category].append(feature)
-            
-            return {
-                "features": features,
-                "total": len(features),
-                "categories": list(categories.keys()),
-                "by_category": categories
-            }
-        except Exception as e:
-            print(f"Error getting features from bridge: {e}")
-    
-    # Fallback to JSON file
     dependencies = load_feature_dependencies()
     
     # Flatten the structure for easier frontend consumption
@@ -80,8 +44,6 @@ def get_all_features() -> Dict[str, Any]:
 def get_features_by_category(category: str) -> List[Dict]:
     """Get features filtered by category"""
     all_data = get_all_features()
-    if "by_category" in all_data and category in all_data["by_category"]:
-        return all_data["by_category"][category]
     return [f for f in all_data["features"] if f["category"] == category]
 
 def get_feature_by_id(feature_id: str) -> Dict:
@@ -95,23 +57,6 @@ def get_feature_by_id(feature_id: str) -> Dict:
 def get_feature_status_summary() -> Dict[str, int]:
     """Get summary of feature statuses"""
     all_data = get_all_features()
-    
-    # If using nautilus_bridge data
-    if BRIDGE_AVAILABLE and "features" in all_data:
-        enabled_count = sum(1 for f in all_data["features"] if f.get("enabled", False))
-        disabled_count = all_data["total"] - enabled_count
-        
-        return {
-            "total": all_data["total"],
-            "enabled": enabled_count,
-            "disabled": disabled_count,
-            "available": all_data["total"],
-            "configured": enabled_count,
-            "requires_config": 0,
-            "requires_data": 0
-        }
-    
-    # Fallback to JSON data
     status_counts = {
         "available": 0,
         "configured": 0,
@@ -121,7 +66,7 @@ def get_feature_status_summary() -> Dict[str, int]:
     }
     
     for feature in all_data["features"]:
-        status = feature.get("status", "unknown")
+        status = feature["status"]
         if status in status_counts:
             status_counts[status] += 1
         else:
@@ -132,35 +77,6 @@ def get_feature_status_summary() -> Dict[str, int]:
 # Service management functions
 def get_all_services() -> Dict[str, Any]:
     """Get all services provided by Nautilus Core"""
-    # Try to get real data from nautilus_bridge first
-    if BRIDGE_AVAILABLE:
-        try:
-            services = _get_all_services_real()
-            
-            # Group by category
-            categories = {}
-            for service in services:
-                category = service["category"]
-                if category not in categories:
-                    categories[category] = []
-                categories[category].append(service)
-            
-            # Count by state
-            running = sum(1 for s in services if s["state"] == "running")
-            stopped = sum(1 for s in services if s["state"] == "stopped")
-            
-            return {
-                "services": services,
-                "total": len(services),
-                "running": running,
-                "stopped": stopped,
-                "categories": list(categories.keys()),
-                "by_category": categories
-            }
-        except Exception as e:
-            print(f"Error getting services from bridge: {e}")
-    
-    # Fallback to JSON file
     dependencies = load_feature_dependencies()
     
     # Extract all unique services
@@ -197,14 +113,6 @@ def get_services_by_feature(feature_name: str) -> List[str]:
 # Component management functions
 def get_core_components() -> List[Dict]:
     """Get all core components with their status"""
-    # Try to get real data from nautilus_bridge first
-    if BRIDGE_AVAILABLE:
-        try:
-            return _get_all_components_real()
-        except Exception as e:
-            print(f"Error getting components from bridge: {e}")
-    
-    # Fallback to hardcoded data
     components = [
         {
             "id": "kernel",
@@ -237,6 +145,26 @@ def get_core_components() -> List[Dict]:
             "dependencies": ["Redis (optional)"],
         },
         {
+            "id": "clock",
+            "name": "Clock",
+            "type": "core",
+            "status": "running",
+            "health": "healthy",
+            "uptime": "2h 15m",
+            "description": "Time management and event scheduling",
+            "dependencies": [],
+        },
+        {
+            "id": "logger",
+            "name": "Logger",
+            "type": "core",
+            "status": "running",
+            "health": "healthy",
+            "uptime": "2h 15m",
+            "description": "Centralized logging system",
+            "dependencies": [],
+        },
+        {
             "id": "data_engine",
             "name": "DataEngine",
             "type": "engine",
@@ -266,6 +194,26 @@ def get_core_components() -> List[Dict]:
             "description": "Pre-trade and post-trade risk management",
             "dependencies": ["MessageBus", "Cache", "PortfolioEngine"],
         },
+        {
+            "id": "strategy_engine",
+            "name": "StrategyEngine",
+            "type": "engine",
+            "status": "running",
+            "health": "healthy",
+            "uptime": "2h 15m",
+            "description": "Strategy lifecycle and execution management",
+            "dependencies": ["MessageBus", "Cache", "Clock"],
+        },
+        {
+            "id": "portfolio_engine",
+            "name": "PortfolioEngine",
+            "type": "engine",
+            "status": "running",
+            "health": "healthy",
+            "uptime": "2h 15m",
+            "description": "Portfolio state tracking and P&L calculation",
+            "dependencies": ["MessageBus", "Cache"],
+        },
     ]
     
     return components
@@ -292,11 +240,6 @@ def get_component_health_summary() -> Dict[str, int]:
         health = component.get("health", "unknown")
         if health in health_counts:
             health_counts[health] += 1
-    
-    # Count running vs stopped
-    running = sum(1 for c in components if c.get("state") == "RUNNING" or c.get("status") == "running")
-    health_counts["running"] = running
-    health_counts["total"] = len(components)
     
     return health_counts
 

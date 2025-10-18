@@ -23,6 +23,20 @@ import {
   FileText,
   GitBranch,
   Layers,
+  Home,
+  Cog,
+  Package,
+  HardDrive,
+  Archive,
+  CloudCog,
+  BarChart2,
+  FileBarChart,
+  UserCog,
+  ShieldCheck,
+  Terminal,
+  Globe,
+  HelpCircle,
+  Wrench,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -32,75 +46,233 @@ interface NavItem {
   icon: any;
   href: string;
   badge?: string;
+  badgeVariant?: "default" | "success" | "warning" | "error";
 }
 
 interface NavSection {
   title: string;
+  icon?: any;
   items: NavItem[];
+  priority?: "critical" | "high" | "medium" | "low";
 }
 
+// Reorganized navigation based on BA document and audit report
 const navSections: NavSection[] = [
+  // DASHBOARD
   {
     title: "Dashboard",
+    icon: Home,
+    priority: "critical",
     items: [
-      { title: "System Overview", icon: Server, href: "/admin/system" },
-      { title: "Analytics", icon: BarChart3, href: "/admin/analytics" },
+      { 
+        title: "System Overview", 
+        icon: Server, 
+        href: "/admin/system",
+        badge: "Live",
+        badgeVariant: "success"
+      },
     ],
   },
+  
+  // NAUTILUS CORE MANAGEMENT (Priority 1 - CRITICAL)
   {
     title: "Nautilus Core",
+    icon: Cpu,
+    priority: "critical",
     items: [
-      { title: "Core Management", icon: Cpu, href: "/admin/core" },
-      { title: "Component Health", icon: Activity, href: "/admin/health" },
-      { title: "Data Feeds", icon: Wifi, href: "/admin/feeds" },
+      { 
+        title: "Core Components", 
+        icon: Package, 
+        href: "/admin/system",
+        badge: "6",
+        badgeVariant: "default"
+      },
+      { 
+        title: "Features & Services", 
+        icon: Cog, 
+        href: "/admin/core",
+        badge: "New",
+        badgeVariant: "warning"
+      },
+      { 
+        title: "Component Health", 
+        icon: Activity, 
+        href: "/admin/health",
+        badge: "New",
+        badgeVariant: "warning"
+      },
+      { 
+        title: "System Configuration", 
+        icon: Wrench, 
+        href: "/admin/settings"
+      },
     ],
   },
+  
+  // TRADING INFRASTRUCTURE (Priority 2 - HIGH)
   {
-    title: "Trading Operations",
+    title: "Trading Infrastructure",
+    icon: TrendingUp,
+    priority: "high",
     items: [
-      { title: "Execution Management", icon: Zap, href: "/admin/execution" },
-      { title: "Risk Controls", icon: AlertTriangle, href: "/admin/risk" },
-      { title: "Broker Integration", icon: Layers, href: "/admin/brokers" },
+      { 
+        title: "Data Feeds", 
+        icon: Wifi, 
+        href: "/admin/feeds",
+        badge: "14+",
+        badgeVariant: "default"
+      },
+      { 
+        title: "Execution Engine", 
+        icon: Zap, 
+        href: "/admin/execution"
+      },
+      { 
+        title: "Risk Management", 
+        icon: Shield, 
+        href: "/admin/risk",
+        badge: "Critical",
+        badgeVariant: "error"
+      },
+      { 
+        title: "Broker Integration", 
+        icon: Layers, 
+        href: "/admin/brokers",
+        badge: "14+",
+        badgeVariant: "default"
+      },
     ],
   },
+  
+  // DATA & STORAGE (Priority 3 - MEDIUM)
   {
     title: "Data & Storage",
+    icon: Database,
+    priority: "medium",
     items: [
-      { title: "Database Management", icon: Database, href: "/admin/database" },
+      { 
+        title: "Database Management", 
+        icon: HardDrive, 
+        href: "/admin/database",
+        badge: "4",
+        badgeVariant: "default"
+      },
+      { 
+        title: "Data Archive", 
+        icon: Archive, 
+        href: "/admin/archive"
+      },
+      { 
+        title: "Cache Management", 
+        icon: CloudCog, 
+        href: "/admin/cache"
+      },
     ],
   },
+  
+  // ANALYTICS & MONITORING (Priority 3 - MEDIUM)
+  {
+    title: "Analytics & Monitoring",
+    icon: BarChart3,
+    priority: "medium",
+    items: [
+      { 
+        title: "System Analytics", 
+        icon: BarChart2, 
+        href: "/admin/analytics"
+      },
+      { 
+        title: "Trading Analytics", 
+        icon: FileBarChart, 
+        href: "/admin/trading-analytics"
+      },
+      { 
+        title: "Audit Logs", 
+        icon: FileCheck, 
+        href: "/admin/logs"
+      },
+    ],
+  },
+  
+  // USER & ACCESS (Priority 4 - LOW)
   {
     title: "User & Access",
+    icon: Users,
+    priority: "low",
     items: [
-      { title: "Users & Roles", icon: Users, href: "/admin/users" },
-      { title: "Access Control", icon: Lock, href: "/admin/access" },
-      { title: "API Keys", icon: Key, href: "/admin/api-keys" },
+      { 
+        title: "Users & Roles", 
+        icon: UserCog, 
+        href: "/admin/users"
+      },
+      { 
+        title: "Access Control", 
+        icon: ShieldCheck, 
+        href: "/admin/access"
+      },
+      { 
+        title: "API Keys", 
+        icon: Key, 
+        href: "/admin/api-keys"
+      },
     ],
   },
-  {
-    title: "Monitoring",
-    items: [
-      { title: "Audit Logs", icon: FileCheck, href: "/admin/logs" },
-    ],
-  },
-  {
-    title: "Configuration",
-    items: [
-      { title: "System Settings", icon: Settings, href: "/admin/settings" },
-    ],
-  },
+  
+  // DOCUMENTATION (Priority 5 - LOW)
   {
     title: "Documentation",
+    icon: BookOpen,
+    priority: "low",
     items: [
-      { title: "Getting Started", icon: BookOpen, href: "/admin/docs/getting-started" },
-      { title: "System Architecture", icon: GitBranch, href: "/admin/docs/architecture" },
-      { title: "Database Guide", icon: Database, href: "/admin/docs/database" },
-      { title: "API Reference", icon: FileText, href: "/admin/docs/api" },
-      { title: "User Guide", icon: Users, href: "/admin/docs/user-guide" },
-      { title: "Troubleshooting", icon: AlertTriangle, href: "/admin/docs/troubleshooting" },
+      { 
+        title: "Getting Started", 
+        icon: BookOpen, 
+        href: "/docs/getting-started"
+      },
+      { 
+        title: "Architecture", 
+        icon: GitBranch, 
+        href: "/docs/architecture"
+      },
+      { 
+        title: "API Reference", 
+        icon: Terminal, 
+        href: "/docs/api"
+      },
+      { 
+        title: "User Guide", 
+        icon: FileText, 
+        href: "/docs/user-guide"
+      },
+      { 
+        title: "Troubleshooting", 
+        icon: AlertTriangle, 
+        href: "/docs/troubleshooting"
+      },
+      { 
+        title: "FAQ", 
+        icon: HelpCircle, 
+        href: "/docs/faq"
+      },
     ],
   },
 ];
+
+// Priority colors
+const priorityColors = {
+  critical: "text-red-500",
+  high: "text-orange-500",
+  medium: "text-yellow-500",
+  low: "text-gray-500",
+};
+
+// Badge variant colors
+const badgeColors = {
+  default: "bg-blue-500/20 text-blue-500",
+  success: "bg-green-500/20 text-green-500",
+  warning: "bg-yellow-500/20 text-yellow-500",
+  error: "bg-red-500/20 text-red-500",
+};
 
 export function AdminSidebar() {
   const [location, setLocation] = useLocation();
@@ -160,43 +332,59 @@ export function AdminSidebar() {
       {/* Navigation */}
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         <nav className="flex-1 space-y-1 overflow-y-auto p-2">
-          {navSections.map((section, sectionIdx) => (
-            <div key={sectionIdx} className="py-2">
-              {!collapsed && (
-                <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {section.title}
-                </p>
-              )}
-              <div className="space-y-1">
-                {section.items.map((item, itemIdx) => {
-                  const Icon = item.icon;
-                  const isActive = location === item.href;
-                  return (
-                    <button
-                      key={itemIdx}
-                      onClick={() => setLocation(item.href)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-blue-500/10 text-blue-500"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      )}
-                    >
-                      <Icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-500")} />
-                      {!collapsed && (
-                        <span className="flex-1 text-left">{item.title}</span>
-                      )}
-                      {!collapsed && item.badge && (
-                        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-500">
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+          {navSections.map((section, sectionIdx) => {
+            const SectionIcon = section.icon;
+            return (
+              <div key={sectionIdx} className="py-2">
+                {!collapsed && (
+                  <div className="mb-2 px-3 flex items-center gap-2">
+                    {SectionIcon && (
+                      <SectionIcon className={cn(
+                        "h-3.5 w-3.5",
+                        section.priority && priorityColors[section.priority]
+                      )} />
+                    )}
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {section.title}
+                    </p>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  {section.items.map((item, itemIdx) => {
+                    const Icon = item.icon;
+                    const isActive = location === item.href;
+                    return (
+                      <button
+                        key={itemIdx}
+                        onClick={() => setLocation(item.href)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActive
+                            ? "bg-blue-500/10 text-blue-500"
+                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                        )}
+                      >
+                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-500")} />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 text-left">{item.title}</span>
+                            {item.badge && (
+                              <span className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium",
+                                badgeColors[item.badgeVariant || "default"]
+                              )}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* Footer */}
