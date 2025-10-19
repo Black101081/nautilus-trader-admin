@@ -1,0 +1,72 @@
+site_name: Nautilus Trader Admin Dashboard
+site_description: Technical documentation for Nautilus Trader Admin Dashboard
+site_author: Development Team
+repo_url: https://github.com/Black101081/nautilus-trader-admin
+repo_name: nautilus-trader-admin
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: blue
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Overview: guides/overview.md
+    - Quick Start: guides/quickstart.md
+    - Installation: guides/installation.md
+  - Architecture:
+    - System Design: architecture/system-design.md
+    - Component Library: architecture/component-library.md
+    - Service Layer: architecture/service-layer.md
+    - Data Flow: architecture/data-flow.md
+  - Implementation:
+    - Workflow: guides/implementation-workflow.md
+    - Step-by-Step: guides/step-by-step.md
+    - Code Examples: guides/code-examples.md
+    - Testing: guides/testing.md
+  - API Reference:
+    - Services: api/services.md
+    - Components: api/components.md
+    - Hooks: api/hooks.md
+  - Task Management:
+    - Current Sprint: tasks/current-sprint.md
+    - Backlog: tasks/backlog.md
+    - Completed: tasks/completed.md
+    - Progress Tracking: tasks/progress.md
+  - Changelog:
+    - Version History: changelog/versions.md
+    - Release Notes: changelog/releases.md
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+
