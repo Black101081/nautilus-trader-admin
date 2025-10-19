@@ -1,17 +1,50 @@
-import { Toaster } from "@/components/ui/sonner";
+import "@/index.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Landing from "./pages/Landing";
-import Demo from "./pages/Demo";
-import Docs from "./pages/Docs";
-import StrategyBuilder from "./pages/StrategyBuilder";
-import Reports from "./pages/Reports";
-// New Admin Pages (6 pages total)
+
+// Landing Pages
+import Home from "./pages/landing/Home";
+import Landing from "./pages/landing/Landing";
+import Demo from "./pages/landing/Demo";
+
+// Dashboards
+import Dashboard from "./pages/dashboards/Dashboard";
+import TraderDashboard from "./pages/dashboards/TraderDashboard";
+import NautilusDemo from "./pages/dashboards/NautilusDemo";
+
+// Trading Pages
+import LiveTrading from "./pages/trading/LiveTrading";
+import LiveTradingNew from "./pages/trading/LiveTradingNew";
+import AdvancedBacktest from "./pages/trading/AdvancedBacktest";
+import Portfolio from "./pages/trading/Portfolio";
+import MarketWatch from "./pages/trading/MarketWatch";
+import Positions from "./pages/trading/Positions";
+import Orders from "./pages/trading/Orders";
+import TradeHistory from "./pages/trading/TradeHistory";
+import WalkForward from "./pages/trading/WalkForward";
+import Optimization from "./pages/trading/Optimization";
+import Performance from "./pages/trading/Performance";
+import RiskAnalysis from "./pages/trading/RiskAnalysis";
+
+// Strategy Tools
+import StrategyBuilder from "./pages/strategies/StrategyBuilder";
+import StrategyLibrary from "./pages/strategies/StrategyLibrary";
+import DeployStrategy from "./pages/strategies/DeployStrategy";
+import TradeJournal from "./pages/strategies/TradeJournal";
+
+// Documentation Pages
+import Docs from "./pages/docs/Docs";
+import DocsGettingStarted from "./pages/docs/DocsGettingStarted";
+import DocsArchitecture from "./pages/docs/DocsArchitecture";
+import DocsDatabase from "./pages/docs/DocsDatabase";
+import DocsAPI from "./pages/docs/DocsAPI";
+import DocsUserGuide from "./pages/docs/DocsUserGuide";
+import DocsTroubleshooting from "./pages/docs/DocsTroubleshooting";
+
+// Admin Pages (New)
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ComponentsPage from "./pages/admin/ComponentsPage";
 import FeaturesPage from "./pages/admin/FeaturesPage";
@@ -21,48 +54,39 @@ import SettingsPage from "./pages/admin/SettingsPage";
 import DatabasePage from "./pages/admin/DatabasePage";
 import ComponentShowcase from "./pages/admin/ComponentShowcase";
 
-// Trader Dashboard
-import TraderDashboard from "./pages/TraderDashboard";
-import LiveTrading from "./pages/LiveTrading";
-import LiveTradingNew from "./pages/LiveTradingNew";
-import AdvancedBacktest from "./pages/AdvancedBacktest";
-import Portfolio from "./pages/Portfolio";
-import MarketWatch from "./pages/MarketWatch";
-import Positions from "./pages/Positions";
-import Orders from "./pages/Orders";
-import TradeHistory from "./pages/TradeHistory";
-import WalkForward from "./pages/WalkForward";
-import Optimization from "./pages/Optimization";
-import StrategyLibrary from "./pages/StrategyLibrary";
-import DeployStrategy from "./pages/DeployStrategy";
-import Performance from "./pages/Performance";
-import RiskAnalysis from "./pages/RiskAnalysis";
-import TradeJournal from "./pages/TradeJournal";
-// Old admin pages moved to admin-old/ directory
-import DocsGettingStarted from "./pages/DocsGettingStarted";
-import DocsArchitecture from "./pages/DocsArchitecture";
-import DocsDatabase from "./pages/DocsDatabase";
-import DocsAPI from "./pages/DocsAPI";
-import DocsUserGuide from "./pages/DocsUserGuide";
-import DocsTroubleshooting from "./pages/DocsTroubleshooting";
-import NautilusDemo from "./pages/NautilusDemo";
-// import MyStrategies from "./pages/MyStrategies"; // Disabled - has TypeScript errors
-// import QuickBacktest from "./pages/QuickBacktest"; // Disabled - has TypeScript errors
+// Other Pages
+import Reports from "./pages/Reports";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
+      {/* Landing Pages */}
       <Route path={"/"} component={Landing} />
-      <Route path={"/dashboard"} component={Dashboard} />
-      <Route path={"/nautilus-demo"} component={NautilusDemo} />
       <Route path={"/home"} component={Home} />
       <Route path={"/demo"} component={Demo} />
+      
+      {/* Dashboards */}
+      <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/trader"} component={TraderDashboard} />
+      <Route path={"/nautilus-demo"} component={NautilusDemo} />
+      
+      {/* Strategy Tools */}
       <Route path={"/strategies"} component={StrategyBuilder} />
-      <Route path={"/reports"} component={Reports} />
+      <Route path={"/library"} component={StrategyLibrary} />
+      <Route path={"/deploy"} component={DeployStrategy} />
+      <Route path={"/journal"} component={TradeJournal} />
+      
+      {/* Documentation */}
       <Route path={"/docs"} component={Docs} />
-      {/* New Admin Routes - 6 Pages */}
-      {/* Specific routes MUST come before generic /admin route */}
+      <Route path={"/admin/docs/getting-started"} component={DocsGettingStarted} />
+      <Route path={"/admin/docs/architecture"} component={DocsArchitecture} />
+      <Route path={"/admin/docs/database"} component={DocsDatabase} />
+      <Route path={"/admin/docs/api"} component={DocsAPI} />
+      <Route path={"/admin/docs/user-guide"} component={DocsUserGuide} />
+      <Route path={"/admin/docs/troubleshooting"} component={DocsTroubleshooting} />
+      
+      {/* Admin Pages - Specific routes MUST come before generic /admin route */}
       <Route path="/admin/components-page" component={ComponentsPage} />
       <Route path="/admin/features" component={FeaturesPage} />
       <Route path="/admin/adapters" component={AdaptersPage} />
@@ -71,7 +95,8 @@ function Router() {
       <Route path="/admin/database" component={DatabasePage} />
       <Route path="/admin/components" component={ComponentShowcase} />
       <Route path="/admin" component={AdminDashboard} />
-      <Route path={"/trader"} component={TraderDashboard} />
+      
+      {/* Trading Pages */}
       <Route path={"/live"} component={LiveTradingNew} />
       <Route path={"/live-old"} component={LiveTrading} />
       <Route path={"/advanced-backtest"} component={AdvancedBacktest} />
@@ -82,45 +107,29 @@ function Router() {
       <Route path={"/trades"} component={TradeHistory} />
       <Route path={"/walk-forward"} component={WalkForward} />
       <Route path={"/optimization"} component={Optimization} />
-      <Route path={"/library"} component={StrategyLibrary} />
-      <Route path={"/deploy"} component={DeployStrategy} />
       <Route path={"/performance"} component={Performance} />
       <Route path={"/risk"} component={RiskAnalysis} />
-      <Route path={"/journal"} component={TradeJournal} />
-
-      {/* Old admin routes removed - pages moved to admin-old/ */}
-      <Route path="/admin/docs/getting-started" component={DocsGettingStarted} />
-      <Route path={"/admin/docs/architecture"} component={DocsArchitecture} />
-      <Route path={"/admin/docs/database"} component={DocsDatabase} />
-      <Route path={"/admin/docs/api"} component={DocsAPI} />
-      <Route path={"/admin/docs/user-guide"} component={DocsUserGuide} />
-      <Route path={"/admin/docs/troubleshooting"} component={DocsTroubleshooting} />
-      {/* <Route path={"/my-strategies"} component={MyStrategies} /> */}
-      {/* <Route path={"/quick-backtest"} component={QuickBacktest} /> */}
+      
+      {/* Other Pages */}
+      <Route path={"/reports"} component={Reports} />
+      
+      {/* 404 Not Found */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-        switchable
-      >
-        <TooltipProvider>
-          <Toaster />
+    <ThemeProvider>
+      <TooltipProvider>
+        <ErrorBoundary>
           <Router />
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </TooltipProvider>
+    </ThemeProvider>
   );
 }
 
 export default App;
+
