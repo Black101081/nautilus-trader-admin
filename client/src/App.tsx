@@ -18,6 +18,7 @@ import FeaturesPage from "./pages/admin/FeaturesPage";
 import AdaptersPage from "./pages/admin/AdaptersPage";
 import MonitoringPage from "./pages/admin/MonitoringPage";
 import SettingsPage from "./pages/admin/SettingsPage";
+import DatabasePage from "./pages/admin/DatabasePage";
 import ComponentShowcase from "./pages/admin/ComponentShowcase";
 
 // Trader Dashboard
@@ -66,8 +67,9 @@ function Router() {
       <Route path="/admin/features" component={FeaturesPage} />
       <Route path="/admin/adapters" component={AdaptersPage} />
       <Route path="/admin/monitoring" component={MonitoringPage} />
-      <Route path="/admin/settings-page" component={SettingsPage} />
-      <Route path="/admin/components" component={ComponentShowcase} />
+          <Route path="/admin/settings-page" component={SettingsPage} />
+          <Route path="/admin/database" component={DatabasePage} />
+          <Route path="/admin/components" component={ComponentShowcase} />
       <Route path={"/trader"} component={TraderDashboard} />
       <Route path={"/live"} component={LiveTradingNew} />
       <Route path={"/live-old"} component={LiveTrading} />

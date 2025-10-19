@@ -11,6 +11,7 @@ import {
   ChevronRight,
   LogOut,
   Server,
+  Database,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -66,6 +67,14 @@ const navItems: NavItem[] = [
     icon: Activity,
     href: "/admin/monitoring",
     description: "Logs, metrics & diagnostics",
+  },
+  {
+    title: "Database",
+    icon: Database,
+    href: "/admin/database",
+    description: "PostgreSQL, Parquet, Redis",
+    badge: "3",
+    badgeVariant: "default",
   },
   {
     title: "Settings",
