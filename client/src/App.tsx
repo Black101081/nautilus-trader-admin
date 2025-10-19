@@ -62,14 +62,15 @@ function Router() {
       <Route path={"/reports"} component={Reports} />
       <Route path={"/docs"} component={Docs} />
       {/* New Admin Routes - 6 Pages */}
-      <Route path="/admin" component={AdminDashboard} />
+      {/* Specific routes MUST come before generic /admin route */}
       <Route path="/admin/components-page" component={ComponentsPage} />
       <Route path="/admin/features" component={FeaturesPage} />
       <Route path="/admin/adapters" component={AdaptersPage} />
       <Route path="/admin/monitoring" component={MonitoringPage} />
-          <Route path="/admin/settings-page" component={SettingsPage} />
-          <Route path="/admin/database" component={DatabasePage} />
-          <Route path="/admin/components" component={ComponentShowcase} />
+      <Route path="/admin/settings-page" component={SettingsPage} />
+      <Route path="/admin/database" component={DatabasePage} />
+      <Route path="/admin/components" component={ComponentShowcase} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route path={"/trader"} component={TraderDashboard} />
       <Route path={"/live"} component={LiveTradingNew} />
       <Route path={"/live-old"} component={LiveTrading} />

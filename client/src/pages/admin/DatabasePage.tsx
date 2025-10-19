@@ -3,6 +3,7 @@ import { AdminSidebar } from '@/components/AdminSidebar';
 import { StatusBadge } from '@/components/admin';
 import { ToastContainer, useToast } from '@/components/Toast';
 import { databaseService } from '@/services/databaseService';
+import logger from '@/utils/logger';
 import { 
   Database,
   HardDrive,
@@ -25,11 +26,14 @@ import {
  */
 
 const DatabasePage: React.FC = () => {
+  logger.component('DatabasePage', 'mounted');
   const { toasts, removeToast, success, error, info } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
 
   // PostgreSQL Operations
   const handleBackupPostgreSQL = async () => {
+    logger.interaction('BackupButton', 'clicked');
+    logger.service('databaseService', 'backupPostgreSQL', 'starting');
     setLoading('backup-pg');
     info('Starting PostgreSQL backup...');
     

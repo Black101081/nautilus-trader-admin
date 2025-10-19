@@ -67,6 +67,9 @@ interface ToastContainerProps {
 }
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onRemove }) => {
+  if (import.meta.env.DEV) {
+    console.log('[ToastContainer] Rendering with toasts:', toasts);
+  }
   return (
     <div className="fixed top-4 right-4 z-[9999] space-y-2 max-w-md pointer-events-none">
       {toasts.map((toast) => (
@@ -87,7 +90,16 @@ export const useToast = () => {
 
   const addToast = (type: ToastMessage['type'], message: string) => {
     const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, type, message }]);
+    if (import.meta.env.DEV) {
+      console.log('[useToast] Adding toast:', { id, type, message });
+    }
+    setToasts((prev) => {
+      const newToasts = [...prev, { id, type, message }];
+      if (import.meta.env.DEV) {
+        console.log('[useToast] Current toasts:', newToasts);
+      }
+      return newToasts;
+    });
   };
 
   const removeToast = (id: string) => {
