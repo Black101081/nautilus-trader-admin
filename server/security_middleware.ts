@@ -65,6 +65,7 @@ export const helmetOptions = {
       connectSrc: [
         "'self'",
         'https://manus-analytics.com',
+        'https://8000-i1qah0e9c2c9cx0gtysxe-9258e91a.manusvm.computer', // Nautilus API
         'wss:', // WebSocket connections
         'ws:',  // WebSocket connections (dev)
       ],
