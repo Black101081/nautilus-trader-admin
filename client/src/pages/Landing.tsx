@@ -110,7 +110,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white group/btn"
-                onClick={() => setLocation("/admin/system")}
+                onClick={() => setLocation("/admin")}
               >
                 <span>Enter Admin Panel</span>
                 <ArrowRight className="ml-2 h-5 w-5 group-hover/btn:translate-x-1 transition-transform" />
