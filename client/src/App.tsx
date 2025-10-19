@@ -53,6 +53,7 @@ import MonitoringPage from "./pages/admin/MonitoringPage";
 import SettingsPage from "./pages/admin/SettingsPage";
 import DatabasePage from "./pages/admin/DatabasePage";
 import ComponentShowcase from "./pages/admin/ComponentShowcase";
+import ToastTest from "./pages/admin/ToastTest";
 
 // Other Pages
 import Reports from "./pages/Reports";
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/admin/settings-page" component={SettingsPage} />
       <Route path="/admin/database" component={DatabasePage} />
       <Route path="/admin/components" component={ComponentShowcase} />
+      <Route path="/admin/toast-test" component={ToastTest} />
       <Route path="/admin" component={AdminDashboard} />
       
       {/* Trading Pages */}

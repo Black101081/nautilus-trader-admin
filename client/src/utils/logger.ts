@@ -16,6 +16,15 @@ export const logger = {
   },
 
   /**
+   * Log info information (only in development)
+   */
+  info: (context: string, ...args: any[]) => {
+    if (isDevelopment) {
+      console.info(`[INFO:${context}]`, ...args);
+    }
+  },
+
+  /**
    * Log debug information (only in development)
    */
   debug: (context: string, ...args: any[]) => {
@@ -44,6 +53,15 @@ export const logger = {
   component: (name: string, event: string, data?: any) => {
     if (isDevelopment) {
       console.log(`[COMPONENT:${name}]`, event, data || '');
+    }
+  },
+
+  /**
+   * Log component render (only in development)
+   */
+  render: (name: string, message: string, data?: any) => {
+    if (isDevelopment) {
+      console.log(`[RENDER:${name}]`, message, data || '');
     }
   },
 
