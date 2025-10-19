@@ -14,6 +14,8 @@
 // Export modular routers
 export { authRouter } from "./auth";
 export { analyticsRouter } from "./analytics";
+export { tradingRouter } from "./trading";
+export { adminRouter } from "./admin";
 
 // TODO: Migrate remaining routers from ../routers.ts
 // - tradingRouter (positions, orders, trades)

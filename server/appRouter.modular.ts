@@ -19,7 +19,7 @@ import { router } from "./_core/trpc";
 import { systemRouter } from "./_core/systemRouter";
 
 // Import modular routers
-import { authRouter, analyticsRouter } from "./modules";
+import { authRouter, analyticsRouter, tradingRouter, adminRouter } from "./modules";
 
 // Import legacy routers (to be migrated)
 import { appRouter as legacyRouter } from "./routers";
@@ -35,14 +35,14 @@ export const appRouter = router({
   // ✅ Modular routers (new structure)
   auth: authRouter,
   analytics: analyticsRouter,
+  trading: tradingRouter,
+  admin: adminRouter,
   
   // ⏳ Legacy routers (to be migrated)
   nautilus: legacyRouter.nautilus,
   strategies: legacyRouter.strategies,
   backtests: legacyRouter.backtests,
-  admin: legacyRouter.admin,
   risk: legacyRouter.risk,
-  trading: legacyRouter.trading,
   nautilusCore: legacyRouter.nautilusCore,
 });
 
