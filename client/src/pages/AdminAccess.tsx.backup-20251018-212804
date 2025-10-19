@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,31 +16,13 @@ export default function AdminAccess() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isPermissionDialogOpen, setIsPermissionDialogOpen] = useState(false);
 
-  const [users, setUsers] = useState<any>(null);
-  const [auditTrail, setAuditTrail] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: users } = trpc.admin.getAllUsers.useQuery(undefined, {
+    refetchInterval: 5000,
+  });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [usersRes, auditRes] = await Promise.all([
-        fetch('/api/trpc/admin.getAllUsers').then(r => r.json()),
-        fetch('/api/trpc/admin.auditTrail').then(r => r.json())
-      ]);
-      setUsers(usersRes.result?.data?.json || null);
-      setAuditTrail(auditRes.result?.data?.json || null);
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const { data: auditTrail } = trpc.admin.auditTrail.useQuery(undefined, {
+    refetchInterval: 3000,
+  });
 
   // Role definitions with permissions
   const roles = [

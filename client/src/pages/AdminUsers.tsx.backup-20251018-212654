@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,78 +16,50 @@ export default function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [newUser, setNewUser] = useState<{ name: string; email: string; role: "user" | "admin" }>({ name: "", email: "", role: "user" });
 
-  const [users, setUsers] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: users, refetch } = trpc.admin.getAllUsers.useQuery(undefined, {
+    refetchInterval: 5000,
+  });
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/trpc/admin.getAllUsers').then(r => r.json());
-      setUsers(res.result?.data?.json || null);
-    } catch (err) {
-      console.error('Failed to fetch users:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-    const interval = setInterval(fetchUsers, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const refetch = fetchUsers;
-
-  const handleCreateUser = async () => {
-    try {
-      await fetch('/api/trpc/admin.createUser', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newUser)
-      });
-      await fetchUsers();
+  const createUserMutation = trpc.admin.createUser.useMutation({
+    onSuccess: () => {
+      refetch();
       setIsCreateDialogOpen(false);
       setNewUser({ name: "", email: "", role: "user" });
-    } catch (err) {
-      console.error('Failed to create user:', err);
-    }
+    },
+  });
+
+  const updateUserMutation = trpc.admin.updateUser.useMutation({
+    onSuccess: () => {
+      refetch();
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+    },
+  });
+
+  const deleteUserMutation = trpc.admin.deleteUser.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const handleCreateUser = () => {
+    createUserMutation.mutate(newUser);
   };
 
-  const handleUpdateUser = async () => {
+  const handleUpdateUser = () => {
     if (selectedUser) {
-      try {
-        await fetch('/api/trpc/admin.updateUser', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: selectedUser.id,
-            name: selectedUser.name,
-            email: selectedUser.email,
-            role: selectedUser.role,
-          })
-        });
-        await fetchUsers();
-        setIsEditDialogOpen(false);
-        setSelectedUser(null);
-      } catch (err) {
-        console.error('Failed to update user:', err);
-      }
+      updateUserMutation.mutate({
+        id: selectedUser.id,
+        name: selectedUser.name,
+        email: selectedUser.email,
+        role: selectedUser.role,
+      });
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = (userId: string) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      try {
-        await fetch('/api/trpc/admin.deleteUser', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId })
-        });
-        await fetchUsers();
-      } catch (err) {
-        console.error('Failed to delete user:', err);
-      }
+      deleteUserMutation.mutate({ id: userId });
     }
   };
 
@@ -247,8 +219,8 @@ export default function AdminUsers() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateUser} disabled={loading}>
-                {loading ? "Creating..." : "Create User"}
+              <Button onClick={handleCreateUser} disabled={createUserMutation.isPending}>
+                {createUserMutation.isPending ? "Creating..." : "Create User"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -300,8 +272,8 @@ export default function AdminUsers() {
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleUpdateUser} disabled={loading}>
-                {loading ? "Saving..." : "Save Changes"}
+              <Button onClick={handleUpdateUser} disabled={updateUserMutation.isPending}>
+                {updateUserMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </DialogContent>
