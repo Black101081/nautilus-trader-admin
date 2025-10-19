@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,42 +11,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminRisk() {
   const [editingLimit, setEditingLimit] = useState<string | null>(null);
-  const [riskLimits, setRiskLimits] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/trpc/risk.getRiskLimits').then(r => r.json());
-      setRiskLimits(res.result?.data?.json || null);
-    } catch (err) {
-      console.error('Failed to fetch risk limits:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: riskLimits, refetch } = trpc.risk.getRiskLimits.useQuery(undefined, {
+    refetchInterval: 5000,
+  });
 
-  const handleUpdateLimit = async (limitType: string, value: number) => {
-    try {
-      await fetch('/api/trpc/risk.updateRiskLimit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ limitType, value })
-      });
-      await fetchData();
+  const updateLimitMutation = trpc.risk.updateRiskLimit.useMutation({
+    onSuccess: () => {
+      refetch();
       setEditingLimit(null);
-    } catch (err) {
-      console.error('Failed to update risk limit:', err);
-    }
+    },
+  });
+
+  const handleUpdateLimit = (limitType: string, value: number) => {
+    updateLimitMutation.mutate({ limitType, value });
   };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const refetch = fetchData;
 
   const globalLimits = riskLimits?.globalLimits || {
     maxPositionSize: 10000,
