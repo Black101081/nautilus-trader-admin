@@ -1,3 +1,4 @@
+import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,50 +9,15 @@ import {
   Home, RefreshCw, Plus, Eye, Code2, PlayCircle, Shield
 } from "lucide-react";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function TraderDashboard() {
-  const [positions, setPositions] = useState<any>(null);
-  const [liveTrades, setLiveTrades] = useState<any>(null);
-  const [riskLimits, setRiskLimits] = useState<any>(null);
-  const [metrics, setMetrics] = useState<any>(null);
-  const [strategies, setStrategies] = useState<any>(null);
-  const [backtests, setBacktests] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [posRes, tradesRes, riskRes, metricsRes, stratRes, backtestRes] = await Promise.all([
-        fetch('/api/trpc/trading.positions').then(r => r.json()),
-        fetch('/api/trpc/trading.liveTrades').then(r => r.json()),
-        fetch('/api/trpc/risk.limits').then(r => r.json()),
-        fetch('/api/trpc/analytics.metrics').then(r => r.json()),
-        fetch('/api/trpc/strategies.list').then(r => r.json()),
-        fetch('/api/trpc/backtests.list').then(r => r.json()),
-      ]);
-      
-      setPositions(posRes.result?.data?.json || []);
-      setLiveTrades(tradesRes.result?.data?.json || []);
-      setRiskLimits(riskRes.result?.data?.json || []);
-      setMetrics(metricsRes.result?.data?.json || {});
-      setStrategies(stratRes.result?.data?.json || []);
-      setBacktests(backtestRes.result?.data?.json || []);
-    } catch (err) {
-      console.error('Failed to fetch trader dashboard data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    // Auto-refresh every 10 seconds
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const refetchPositions = fetchData;
+  const { data: positions, refetch: refetchPositions } = trpc.trading.positions.useQuery();
+  const { data: liveTrades } = trpc.trading.liveTrades.useQuery();
+  const { data: riskLimits } = trpc.risk.limits.useQuery();
+  const { data: metrics } = trpc.analytics.metrics.useQuery({});
+  const { data: strategies } = trpc.strategies.list.useQuery();
+  const { data: backtests } = trpc.backtests.list.useQuery();
 
   // Calculate portfolio metrics
   const openPositions = positions?.length || 0;

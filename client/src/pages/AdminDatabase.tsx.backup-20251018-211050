@@ -3,68 +3,42 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trpc } from "@/lib/trpc";
 import { Database, RefreshCw, Download, Upload, Activity, HardDrive, Clock, Server, FileText, Trash2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function AdminDatabase() {
-  const [dbStats, setDbStats] = useState<any>(null);
-  const [redisInfo, setRedisInfo] = useState<any>(null);
-  const [redisKeyspaceData, setRedisKeyspaceData] = useState<any>(null);
-  const [postgresInfo, setPostgresInfo] = useState<any>(null);
-  const [postgresTables, setPostgresTables] = useState<any>(null);
-  const [parquetOverview, setParquetOverview] = useState<any>(null);
-  const [parquetDirectories, setParquetDirectories] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: dbStats, isLoading, refetch } = trpc.admin.getDatabaseStats.useQuery(undefined, {
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<string>("");
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const [statsRes, redisInfoRes, redisKeyRes, pgInfoRes, pgTablesRes, parquetOverRes, parquetDirRes] = await Promise.all([
-        fetch('/api/trpc/admin.getDatabaseStats').then(r => r.json()),
-        fetch('/api/trpc/admin.getRedisInfo').then(r => r.json()),
-        fetch('/api/trpc/admin.getRedisKeyspaceStats').then(r => r.json()),
-        fetch('/api/trpc/admin.getPostgresInfo').then(r => r.json()),
-        fetch('/api/trpc/admin.getPostgresTables').then(r => r.json()),
-        fetch('/api/trpc/admin.getParquetOverview').then(r => r.json()),
-        fetch('/api/trpc/admin.listParquetDirectories').then(r => r.json()),
-      ]);
-      
-      setDbStats(statsRes.result?.data?.json || null);
-      setRedisInfo(redisInfoRes.result?.data?.json || null);
-      setRedisKeyspaceData(redisKeyRes.result?.data?.json || null);
-      setPostgresInfo(pgInfoRes.result?.data?.json || null);
-      setPostgresTables(pgTablesRes.result?.data?.json || null);
-      setParquetOverview(parquetOverRes.result?.data?.json || null);
-      setParquetDirectories(parquetDirRes.result?.data?.json || null);
-    } catch (err) {
-      console.error('Failed to fetch database data:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Real tRPC queries for Redis
+  const { data: redisInfo } = trpc.admin.getRedisInfo.useQuery(undefined, {
+    refetchInterval: 5000,
+  });
+  const { data: redisKeyspaceData } = trpc.admin.getRedisKeyspaceStats.useQuery(undefined, {
+    refetchInterval: 5000,
+  });
+  const flushRedisMutation = trpc.admin.flushRedisCache.useMutation();
 
-  const flushRedisCache = async () => {
-    try {
-      await fetch('/api/trpc/admin.flushRedisCache', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      await fetchData(); // Refresh after flush
-    } catch (err) {
-      console.error('Failed to flush Redis cache:', err);
-    }
-  };
+  // Real tRPC queries for PostgreSQL
+  const { data: postgresInfo } = trpc.admin.getPostgresInfo.useQuery(undefined, {
+    refetchInterval: 10000,
+  });
+  const { data: postgresTables } = trpc.admin.getPostgresTables.useQuery(undefined, {
+    refetchInterval: 10000,
+  });
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const refetch = fetchData;
+  // Real tRPC queries for Parquet
+  const { data: parquetOverview } = trpc.admin.getParquetOverview.useQuery(undefined, {
+    refetchInterval: 30000,
+  });
+  const { data: parquetDirectories } = trpc.admin.listParquetDirectories.useQuery(undefined, {
+    refetchInterval: 30000,
+  });
 
   // Prepare data for rendering with proper type casting
   const redisData = {
