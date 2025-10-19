@@ -1,0 +1,21 @@
+graph TD
+    A["Trader Interface<br>(React/Vite)"] -->|HTTP/WebSocket| B("Node.js Server<br>(Express/Vite)")
+    B -->|HTTP/WebSocket| C("Nautilus FastAPI Bridge<br>(Python/FastAPI)")
+    C -->|Python API| D("Nautilus Trader Core<br>(Python)")
+
+    subgraph "Frontend (Port 3015)"
+        A
+    end
+
+    subgraph "Backend (Port 3015)"
+        B
+    end
+
+    subgraph "Nautilus API (Port 8000)"
+        C
+    end
+
+    subgraph "Nautilus Core"
+        D
+    end
+

@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
-import { NAUTILUS_API } from "@/config/api";
 
 export default function TraderDashboard() {
   const [positions, setPositions] = useState<any>(null);
@@ -23,58 +22,21 @@ export default function TraderDashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      
-      const [posRes, tradesRes, stratRes, ordersRes] = await Promise.all([
-        fetch(NAUTILUS_API.positions).then(r => r.json()),
-        fetch(NAUTILUS_API.trades).then(r => r.json()),
-        fetch(NAUTILUS_API.strategies).then(r => r.json()),
-        fetch(NAUTILUS_API.orders).then(r => r.json()),
+      const [posRes, tradesRes, riskRes, metricsRes, stratRes, backtestRes] = await Promise.all([
+        fetch('/api/trpc/trading.positions').then(r => r.json()),
+        fetch('/api/trpc/trading.liveTrades').then(r => r.json()),
+        fetch('/api/trpc/risk.limits').then(r => r.json()),
+        fetch('/api/trpc/analytics.metrics').then(r => r.json()),
+        fetch('/api/trpc/strategies.list').then(r => r.json()),
+        fetch('/api/trpc/backtests.list').then(r => r.json()),
       ]);
       
-      // Map Nautilus API response to our format
-      const mappedPositions = posRes.map((p: any) => ({
-        id: p.instrument_id,
-        symbol: p.instrument_id,
-        quantity: p.quantity,
-        avgPrice: p.avg_px,
-        currentPrice: p.avg_px + (p.unrealized_pnl / p.quantity),
-        unrealizedPnl: p.unrealized_pnl,
-        side: p.side
-      }));
-      
-      const mappedTrades = tradesRes.map((t: any) => ({
-        id: t.instrument_id + t.timestamp,
-        symbol: t.instrument_id,
-        side: t.side,
-        quantity: t.quantity,
-        price: t.price,
-        pnl: t.pnl,
-        timestamp: t.timestamp,
-        status: t.pnl !== 0 ? 'closed' : 'open'
-      }));
-      
-      setPositions(mappedPositions || []);
-      setLiveTrades(mappedTrades || []);
-      setStrategies(stratRes || []);
-      
-      // Calculate metrics from data
-      const totalStrategyPnL = stratRes.reduce((sum: number, s: any) => sum + s.pnl, 0);
-      const calculatedMetrics = {
-        totalPnL: totalStrategyPnL,
-        winRate: 0, // Will calculate from trades
-        sharpeRatio: 1.8,
-        maxDrawdown: -5.2
-      };
-      setMetrics(calculatedMetrics);
-      
-      // Mock risk limits for now
-      setRiskLimits([
-        { name: 'Max Position Size', current: 75, limit: 100, unit: '%' },
-        { name: 'Daily Loss Limit', current: 2.5, limit: 5.0, unit: '%' },
-      ]);
-      
-      // Mock backtests for now
-      setBacktests([]);
+      setPositions(posRes.result?.data?.json || []);
+      setLiveTrades(tradesRes.result?.data?.json || []);
+      setRiskLimits(riskRes.result?.data?.json || []);
+      setMetrics(metricsRes.result?.data?.json || {});
+      setStrategies(stratRes.result?.data?.json || []);
+      setBacktests(backtestRes.result?.data?.json || []);
     } catch (err) {
       console.error('Failed to fetch trader dashboard data:', err);
     } finally {

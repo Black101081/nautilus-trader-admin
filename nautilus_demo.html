@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nautilus Trader API Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #334155;
+        }
+        
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .metric.green { color: #10b981; }
+        .metric.red { color: #ef4444; }
+        .metric.blue { color: #3b82f6; }
+        .metric.purple { color: #a855f7; }
+        
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        th {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            color: #e2e8f0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge.running { background: #10b98120; color: #10b981; }
+        .badge.stopped { background: #ef444420; color: #ef4444; }
+        .badge.filled { background: #3b82f620; color: #3b82f6; }
+        .badge.pending { background: #f59e0b20; color: #f59e0b; }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+        
+        .error {
+            background: #ef444420;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                ⚡ Nautilus Trader API Demo
+                <span class="status-badge">
+                    <span class="status-dot"></span>
+                    <span id="connection-status">Connecting...</span>
+                </span>
+            </h1>
+            <p>Real-time data from Nautilus FastAPI Bridge (Port 8000)</p>
+        </header>
+
+        <div id="error-container"></div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>Total P&L</h2>
+                <div class="metric green" id="total-pnl">$0.00</div>
+                <div class="subtitle" id="strategies-count">0 strategies</div>
+            </div>
+            
+            <div class="card">
+                <h2>Active Strategies</h2>
+                <div class="metric blue" id="active-strategies">0</div>
+                <div class="subtitle" id="total-strategies">of 0 total</div>
+            </div>
+            
+            <div class="card">
+                <h2>Orders</h2>
+                <div class="metric purple" id="total-orders">0</div>
+                <div class="subtitle" id="filled-orders">0 filled</div>
+            </div>
+            
+            <div class="card">
+                <h2>Open Positions</h2>
+                <div class="metric" id="open-positions">0</div>
+                <div class="subtitle" id="unrealized-pnl">$0.00 unrealized</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Strategies</h2>
+            <div id="strategies-loading" class="loading">Loading strategies...</div>
+            <table id="strategies-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Orders</th>
+                        <th>Positions</th>
+                        <th>P&L</th>
+                    </tr>
+                </thead>
+                <tbody id="strategies-body"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Recent Orders</h2>
+            <div id="orders-loading" class="loading">Loading orders...</div>
+            <table id="orders-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Instrument</th>
+                        <th>Side</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="orders-body"></tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Open Positions</h2>
+            <div id="positions-loading" class="loading">Loading positions...</div>
+            <table id="positions-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Instrument</th>
+                        <th>Side</th>
+                        <th>Quantity</th>
+                        <th>Avg Price</th>
+                        <th>Unrealized P&L</th>
+                        <th>Realized P&L</th>
+                    </tr>
+                </thead>
+                <tbody id="positions-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://8000-i1qah0e9c2c9cx0gtysxe-9258e91a.manusvm.computer';
+        
+        let strategies = [];
+        let orders = [];
+        let positions = [];
+
+        async function fetchData() {
+            try {
+                const [strategiesRes, ordersRes, positionsRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/api/nautilus/strategies`),
+                    fetch(`${API_BASE_URL}/api/nautilus/orders`),
+                    fetch(`${API_BASE_URL}/api/nautilus/positions`)
+                ]);
+
+                strategies = await strategiesRes.json();
+                orders = await ordersRes.json();
+                positions = await positionsRes.json();
+
+                updateUI();
+                document.getElementById('connection-status').textContent = 'Connected';
+                document.getElementById('error-container').innerHTML = '';
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('connection-status').textContent = 'Connection Error';
+                document.getElementById('error-container').innerHTML = `
+                    <div class="error">
+                        <strong>Connection Error:</strong> Unable to connect to Nautilus API at ${API_BASE_URL}
+                    </div>
+                `;
+            }
+        }
+
+        function updateUI() {
+            // Update metrics
+            const totalPnL = strategies.reduce((sum, s) => sum + s.pnl, 0);
+            const runningStrategies = strategies.filter(s => s.status === 'RUNNING').length;
+            const filledOrders = orders.filter(o => o.status === 'FILLED').length;
+            const totalUnrealizedPnL = positions.reduce((sum, p) => sum + p.unrealized_pnl, 0);
+
+            document.getElementById('total-pnl').textContent = `$${totalPnL.toFixed(2)}`;
+            document.getElementById('total-pnl').className = `metric ${totalPnL >= 0 ? 'green' : 'red'}`;
+            document.getElementById('strategies-count').textContent = `${strategies.length} strategies`;
+
+            document.getElementById('active-strategies').textContent = runningStrategies;
+            document.getElementById('total-strategies').textContent = `of ${strategies.length} total`;
+
+            document.getElementById('total-orders').textContent = orders.length;
+            document.getElementById('filled-orders').textContent = `${filledOrders} filled`;
+
+            document.getElementById('open-positions').textContent = positions.length;
+            document.getElementById('unrealized-pnl').textContent = `$${totalUnrealizedPnL.toFixed(2)} unrealized`;
+            document.getElementById('unrealized-pnl').className = `subtitle ${totalUnrealizedPnL >= 0 ? 'green' : 'red'}`;
+
+            // Update strategies table
+            if (strategies.length > 0) {
+                document.getElementById('strategies-loading').style.display = 'none';
+                document.getElementById('strategies-table').style.display = 'table';
+                
+                const tbody = document.getElementById('strategies-body');
+                tbody.innerHTML = strategies.map(s => `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td><span class="badge ${s.status.toLowerCase()}">${s.status}</span></td>
+                        <td>${s.orders_count}</td>
+                        <td>${s.positions_count}</td>
+                        <td style="color: ${s.pnl >= 0 ? '#10b981' : '#ef4444'}">$${s.pnl.toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            }
+
+            // Update orders table
+            if (orders.length > 0) {
+                document.getElementById('orders-loading').style.display = 'none';
+                document.getElementById('orders-table').style.display = 'table';
+                
+                const tbody = document.getElementById('orders-body');
+                tbody.innerHTML = orders.slice(0, 10).map(o => `
+                    <tr>
+                        <td>${o.instrument_id}</td>
+                        <td><span class="badge ${o.side.toLowerCase()}">${o.side}</span></td>
+                        <td>${o.type}</td>
+                        <td>${o.quantity}</td>
+                        <td>${o.avg_px ? '$' + o.avg_px.toFixed(2) : '-'}</td>
+                        <td><span class="badge ${o.status.toLowerCase()}">${o.status}</span></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Update positions table
+            if (positions.length > 0) {
+                document.getElementById('positions-loading').style.display = 'none';
+                document.getElementById('positions-table').style.display = 'table';
+                
+                const tbody = document.getElementById('positions-body');
+                tbody.innerHTML = positions.map(p => `
+                    <tr>
+                        <td>${p.instrument_id}</td>
+                        <td><span class="badge ${p.side.toLowerCase()}">${p.side}</span></td>
+                        <td>${p.quantity}</td>
+                        <td>$${p.avg_px.toFixed(2)}</td>
+                        <td style="color: ${p.unrealized_pnl >= 0 ? '#10b981' : '#ef4444'}">$${p.unrealized_pnl.toFixed(2)}</td>
+                        <td style="color: ${p.realized_pnl >= 0 ? '#10b981' : '#ef4444'}">$${p.realized_pnl.toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Initial fetch
+        fetchData();
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>
+

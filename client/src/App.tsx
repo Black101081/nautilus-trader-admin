@@ -49,6 +49,7 @@ import DocsDatabase from "./pages/DocsDatabase";
 import DocsAPI from "./pages/DocsAPI";
 import DocsUserGuide from "./pages/DocsUserGuide";
 import DocsTroubleshooting from "./pages/DocsTroubleshooting";
+import NautilusDemo from "./pages/NautilusDemo";
 // import MyStrategies from "./pages/MyStrategies"; // Disabled - has TypeScript errors
 // import QuickBacktest from "./pages/QuickBacktest"; // Disabled - has TypeScript errors
 
@@ -58,6 +59,7 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Landing} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/nautilus-demo"} component={NautilusDemo} />
       <Route path={"/home"} component={Home} />
       <Route path={"/demo"} component={Demo} />
       <Route path={"/strategies"} component={StrategyBuilder} />

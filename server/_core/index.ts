@@ -55,6 +55,41 @@ async function startServer() {
   }
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+
+  // Nautilus API Proxy - Forward requests to Nautilus FastAPI bridge
+  const NAUTILUS_API_URL = process.env.NAUTILUS_API_URL || 'http://localhost:8000';
+  
+  app.all('/api/nautilus/*', async (req, res) => {
+    const nautilusPath = req.path.replace('/api/nautilus', '/api/nautilus');
+    const targetUrl = `${NAUTILUS_API_URL}${nautilusPath}${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`;
+    
+    try {
+      const response = await fetch(targetUrl, {
+        method: req.method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...req.headers as any,
+        },
+        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+      });
+      
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (error) {
+      console.error('Nautilus API proxy error:', error);
+      res.status(500).json({ error: 'Failed to connect to Nautilus API' });
+    }
+  });
+
+  app.get('/api/nautilus-health', async (req, res) => {
+    try {
+      const response = await fetch(`${NAUTILUS_API_URL}/health`);
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ status: 'error', message: 'Nautilus API not available' });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",
