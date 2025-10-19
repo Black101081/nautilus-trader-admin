@@ -47,22 +47,27 @@ export async function getSystemLogs(filters?: {
   const db = await getDb();
   if (!db) return [];
 
-  let results;
-  if (filters?.level) {
-    results = await db.select().from(systemLogs)
-      .where(eq(systemLogs.level, filters.level as any))
-      .orderBy(desc(systemLogs.createdAt))
-      .limit(filters?.limit || 100);
-  } else {
-    results = await db.select().from(systemLogs)
-      .orderBy(desc(systemLogs.createdAt))
-      .limit(filters?.limit || 100);
-  }
+  try {
+    let results;
+    if (filters?.level) {
+      results = await db.select().from(systemLogs)
+        .where(eq(systemLogs.level, filters.level as any))
+        .orderBy(desc(systemLogs.createdAt))
+        .limit(filters?.limit || 100);
+    } else {
+      results = await db.select().from(systemLogs)
+        .orderBy(desc(systemLogs.createdAt))
+        .limit(filters?.limit || 100);
+    }
 
-  return results.map((log) => ({
-    ...log,
-    metadata: log.metadata ? JSON.parse(log.metadata) : null,
-  }));
+    return results.map((log) => ({
+      ...log,
+      metadata: log.metadata ? JSON.parse(log.metadata) : null,
+    }));
+  } catch (error) {
+    console.error('getSystemLogs error:', error);
+    return [];
+  }
 }
 
 // ============ Audit Trail ============
@@ -103,22 +108,27 @@ export async function getAuditTrail(filters?: {
   const db = await getDb();
   if (!db) return [];
 
-  let results;
-  if (filters?.userId) {
-    results = await db.select().from(auditTrail)
-      .where(eq(auditTrail.userId, filters.userId))
-      .orderBy(desc(auditTrail.createdAt))
-      .limit(filters?.limit || 100);
-  } else {
-    results = await db.select().from(auditTrail)
-      .orderBy(desc(auditTrail.createdAt))
-      .limit(filters?.limit || 100);
-  }
+  try {
+    let results;
+    if (filters?.userId) {
+      results = await db.select().from(auditTrail)
+        .where(eq(auditTrail.userId, filters.userId))
+        .orderBy(desc(auditTrail.createdAt))
+        .limit(filters?.limit || 100);
+    } else {
+      results = await db.select().from(auditTrail)
+        .orderBy(desc(auditTrail.createdAt))
+        .limit(filters?.limit || 100);
+    }
 
-  return results.map((log) => ({
-    ...log,
-    details: log.details ? JSON.parse(log.details) : null,
-  }));
+    return results.map((log) => ({
+      ...log,
+      details: log.details ? JSON.parse(log.details) : null,
+    }));
+  } catch (error) {
+    console.error('getAuditTrail error:', error);
+    return [];
+  }
 }
 
 // ============ Risk Limits ============
@@ -369,38 +379,43 @@ export async function getPerformanceMetrics(filters?: {
 
 export async function getSystemStats() {
   const db = await getDb();
-  if (!db) return null;
+  if (!db) return { totalUsers: 0, totalStrategies: 0, totalBacktests: 0, totalLiveTrades: 0, openPositions: 0, systemLogsCount: 0 };
 
-  const [
-    totalUsers,
-    totalStrategies,
-    totalBacktests,
-    totalLiveTrades,
-    openPositions,
-    systemLogsCount,
-  ] = await Promise.all([
-    db.select({ count: sql<number>`count(*)` }).from(systemLogs).then((r) => r[0]?.count || 0),
-    db.select({ count: sql<number>`count(*)` }).from(strategies).then((r) => r[0]?.count || 0),
-    db.select({ count: sql<number>`count(*)` }).from(backtests).then((r) => r[0]?.count || 0),
-    db.select({ count: sql<number>`count(*)` }).from(liveTrades).then((r) => r[0]?.count || 0),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(positions)
-      .then((r) => r[0]?.count || 0),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(systemLogs)
-      .where(eq(systemLogs.level, "error"))
-      .then((r) => r[0]?.count || 0),
-  ]);
+  try {
+    const [
+      totalUsers,
+      totalStrategies,
+      totalBacktests,
+      totalLiveTrades,
+      openPositions,
+      systemLogsCount,
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(systemLogs).then((r) => r[0]?.count || 0),
+      db.select({ count: sql<number>`count(*)` }).from(strategies).then((r) => r[0]?.count || 0),
+      db.select({ count: sql<number>`count(*)` }).from(backtests).then((r) => r[0]?.count || 0),
+      db.select({ count: sql<number>`count(*)` }).from(liveTrades).then((r) => r[0]?.count || 0),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(positions)
+        .then((r) => r[0]?.count || 0),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(systemLogs)
+        .where(eq(systemLogs.level, "error"))
+        .then((r) => r[0]?.count || 0),
+    ]);
 
-  return {
-    totalUsers,
-    totalStrategies,
-    totalBacktests,
-    totalLiveTrades,
-    openPositions,
-    systemLogsCount,
-  };
+    return {
+      totalUsers,
+      totalStrategies,
+      totalBacktests,
+      totalLiveTrades,
+      openPositions,
+      systemLogsCount,
+    };
+  } catch (error) {
+    console.error('getSystemStats error:', error);
+    return { totalUsers: 0, totalStrategies: 0, totalBacktests: 0, totalLiveTrades: 0, openPositions: 0, systemLogsCount: 0 };
+  }
 }
 
