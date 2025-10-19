@@ -1,42 +1,16 @@
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import {
-  Server,
-  Users,
-  FileCheck,
-  Settings,
-  Database,
+  LayoutDashboard,
+  Package,
+  Layers,
+  Plug,
   Activity,
-  Shield,
-  BarChart3,
+  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Zap,
-  Key,
-  AlertTriangle,
-  TrendingUp,
-  Cpu,
-  Wifi,
-  Lock,
-  BookOpen,
-  FileText,
-  GitBranch,
-  Layers,
-  Home,
-  Cog,
-  Package,
-  HardDrive,
-  Archive,
-  CloudCog,
-  BarChart2,
-  FileBarChart,
-  UserCog,
-  ShieldCheck,
-  Terminal,
-  Globe,
-  HelpCircle,
-  Wrench,
+  Server,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
@@ -45,226 +19,61 @@ interface NavItem {
   title: string;
   icon: any;
   href: string;
+  description: string;
   badge?: string;
   badgeVariant?: "default" | "success" | "warning" | "error";
 }
 
-interface NavSection {
-  title: string;
-  icon?: any;
-  items: NavItem[];
-  priority?: "critical" | "high" | "medium" | "low";
-}
-
-// Reorganized navigation based on BA document and audit report
-const navSections: NavSection[] = [
-  // DASHBOARD
+/**
+ * Simplified Admin Navigation - 6 Core Pages
+ * Based on NEW_ADMIN_DESIGN_PROPOSAL.md
+ */
+const navItems: NavItem[] = [
   {
     title: "Dashboard",
-    icon: Home,
-    priority: "critical",
-    items: [
-      { 
-        title: "System Overview", 
-        icon: Server, 
-        href: "/admin/system",
-        badge: "Live",
-        badgeVariant: "success"
-      },
-    ],
+    icon: LayoutDashboard,
+    href: "/admin",
+    description: "System overview & quick actions",
+    badge: "Live",
+    badgeVariant: "success",
   },
-  
-  // NAUTILUS CORE MANAGEMENT (Priority 1 - CRITICAL)
   {
-    title: "Nautilus Core",
-    icon: Cpu,
-    priority: "critical",
-    items: [
-      { 
-        title: "Core Components", 
-        icon: Package, 
-        href: "/admin/system",
-        badge: "6",
-        badgeVariant: "default"
-      },
-      { 
-        title: "Features & Services", 
-        icon: Cog, 
-        href: "/admin/core",
-        badge: "New",
-        badgeVariant: "warning"
-      },
-      { 
-        title: "Component Health", 
-        icon: Activity, 
-        href: "/admin/health",
-        badge: "New",
-        badgeVariant: "warning"
-      },
-      { 
-        title: "System Configuration", 
-        icon: Wrench, 
-        href: "/admin/settings"
-      },
-    ],
+    title: "Components",
+    icon: Package,
+    href: "/admin/components-page",
+    description: "Manage 6 core components",
+    badge: "6",
+    badgeVariant: "default",
   },
-  
-  // TRADING INFRASTRUCTURE (Priority 2 - HIGH)
   {
-    title: "Trading Infrastructure",
-    icon: TrendingUp,
-    priority: "high",
-    items: [
-      { 
-        title: "Data Feeds", 
-        icon: Wifi, 
-        href: "/admin/feeds",
-        badge: "14+",
-        badgeVariant: "default"
-      },
-      { 
-        title: "Execution Engine", 
-        icon: Zap, 
-        href: "/admin/execution"
-      },
-      { 
-        title: "Risk Management", 
-        icon: Shield, 
-        href: "/admin/risk",
-        badge: "Critical",
-        badgeVariant: "error"
-      },
-      { 
-        title: "Broker Integration", 
-        icon: Layers, 
-        href: "/admin/brokers",
-        badge: "14+",
-        badgeVariant: "default"
-      },
-    ],
+    title: "Features & Services",
+    icon: Layers,
+    href: "/admin/features",
+    description: "64 features + 126 services",
+    badge: "190",
+    badgeVariant: "default",
   },
-  
-  // DATA & STORAGE (Priority 3 - MEDIUM)
   {
-    title: "Data & Storage",
-    icon: Database,
-    priority: "medium",
-    items: [
-      { 
-        title: "Database Management", 
-        icon: HardDrive, 
-        href: "/admin/database",
-        badge: "4",
-        badgeVariant: "default"
-      },
-      { 
-        title: "Data Archive", 
-        icon: Archive, 
-        href: "/admin/archive"
-      },
-      { 
-        title: "Cache Management", 
-        icon: CloudCog, 
-        href: "/admin/cache"
-      },
-    ],
+    title: "Adapters",
+    icon: Plug,
+    href: "/admin/adapters",
+    description: "Data & execution connections",
+    badge: "14",
+    badgeVariant: "default",
   },
-  
-  // ANALYTICS & MONITORING (Priority 3 - MEDIUM)
   {
-    title: "Analytics & Monitoring",
-    icon: BarChart3,
-    priority: "medium",
-    items: [
-      { 
-        title: "System Analytics", 
-        icon: BarChart2, 
-        href: "/admin/analytics"
-      },
-      { 
-        title: "Trading Analytics", 
-        icon: FileBarChart, 
-        href: "/admin/trading-analytics"
-      },
-      { 
-        title: "Audit Logs", 
-        icon: FileCheck, 
-        href: "/admin/logs"
-      },
-    ],
+    title: "Monitoring",
+    icon: Activity,
+    href: "/admin/monitoring",
+    description: "Logs, metrics & diagnostics",
   },
-  
-  // USER & ACCESS (Priority 4 - LOW)
   {
-    title: "User & Access",
-    icon: Users,
-    priority: "low",
-    items: [
-      { 
-        title: "Users & Roles", 
-        icon: UserCog, 
-        href: "/admin/users"
-      },
-      { 
-        title: "Access Control", 
-        icon: ShieldCheck, 
-        href: "/admin/access"
-      },
-      { 
-        title: "API Keys", 
-        icon: Key, 
-        href: "/admin/api-keys"
-      },
-    ],
-  },
-  
-  // DOCUMENTATION (Priority 5 - LOW)
-  {
-    title: "Documentation",
-    icon: BookOpen,
-    priority: "low",
-    items: [
-      { 
-        title: "Getting Started", 
-        icon: BookOpen, 
-        href: "/docs/getting-started"
-      },
-      { 
-        title: "Architecture", 
-        icon: GitBranch, 
-        href: "/docs/architecture"
-      },
-      { 
-        title: "API Reference", 
-        icon: Terminal, 
-        href: "/docs/api"
-      },
-      { 
-        title: "User Guide", 
-        icon: FileText, 
-        href: "/docs/user-guide"
-      },
-      { 
-        title: "Troubleshooting", 
-        icon: AlertTriangle, 
-        href: "/docs/troubleshooting"
-      },
-      { 
-        title: "FAQ", 
-        icon: HelpCircle, 
-        href: "/docs/faq"
-      },
-    ],
+    title: "Settings",
+    icon: Settings,
+    href: "/admin/settings-page",
+    description: "System config & user management",
   },
 ];
-
-// Priority colors
-const priorityColors = {
-  critical: "text-red-500",
-  high: "text-orange-500",
-  medium: "text-yellow-500",
-  low: "text-gray-500",
-};
 
 // Badge variant colors
 const badgeColors = {
@@ -311,7 +120,7 @@ export function AdminSidebar() {
             </div>
             <div>
               <p className="text-sm font-semibold">Admin Panel</p>
-              <p className="text-xs text-muted-foreground">NautilusTrader</p>
+              <p className="text-xs text-muted-foreground">Nautilus Trader</p>
             </div>
           </div>
         )}
@@ -332,59 +141,70 @@ export function AdminSidebar() {
       {/* Navigation */}
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         <nav className="flex-1 space-y-1 overflow-y-auto p-2">
-          {navSections.map((section, sectionIdx) => {
-            const SectionIcon = section.icon;
-            return (
-              <div key={sectionIdx} className="py-2">
-                {!collapsed && (
-                  <div className="mb-2 px-3 flex items-center gap-2">
-                    {SectionIcon && (
-                      <SectionIcon className={cn(
-                        "h-3.5 w-3.5",
-                        section.priority && priorityColors[section.priority]
-                      )} />
-                    )}
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {section.title}
-                    </p>
-                  </div>
-                )}
-                <div className="space-y-1">
-                  {section.items.map((item, itemIdx) => {
-                    const Icon = item.icon;
-                    const isActive = location === item.href;
-                    return (
-                      <button
-                        key={itemIdx}
-                        onClick={() => setLocation(item.href)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-blue-500/10 text-blue-500"
-                            : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        )}
-                      >
-                        <Icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-500")} />
-                        {!collapsed && (
-                          <>
-                            <span className="flex-1 text-left">{item.title}</span>
-                            {item.badge && (
-                              <span className={cn(
-                                "rounded-full px-2 py-0.5 text-xs font-medium",
-                                badgeColors[item.badgeVariant || "default"]
-                              )}>
-                                {item.badge}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+          {!collapsed && (
+            <div className="mb-4 px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Main Navigation
+              </p>
+            </div>
+          )}
+          
+          <div className="space-y-1">
+            {navItems.map((item, idx) => {
+              const Icon = item.icon;
+              const isActive = location === item.href;
+              
+              return (
+                <button
+                  key={idx}
+                  onClick={() => setLocation(item.href)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                    isActive
+                      ? "bg-blue-500/10 text-blue-500 shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )}
+                  title={collapsed ? item.title : undefined}
+                >
+                  <Icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-blue-500")} />
+                  {!collapsed && (
+                    <>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{item.title}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          {item.description}
+                        </div>
+                      </div>
+                      {item.badge && (
+                        <span className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium",
+                          badgeColors[item.badgeVariant || "default"]
+                        )}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Component Showcase Link (Dev Only) */}
+          {!collapsed && (
+            <div className="mt-6 px-3 py-2 border-t border-border/40">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Development
+              </p>
+              <button
+                onClick={() => setLocation("/admin/components")}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Package className="h-4 w-4" />
+                <span>Component Showcase</span>
+              </button>
+            </div>
+          )}
         </nav>
 
         {/* Footer */}

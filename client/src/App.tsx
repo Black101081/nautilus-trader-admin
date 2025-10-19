@@ -11,7 +11,13 @@ import Demo from "./pages/Demo";
 import Docs from "./pages/Docs";
 import StrategyBuilder from "./pages/StrategyBuilder";
 import Reports from "./pages/Reports";
-import AdminDashboard from "./pages/AdminDashboard";
+// New Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ComponentsPage from "./pages/admin/ComponentsPage";
+import FeaturesPage from "./pages/admin/FeaturesPage";
+import ComponentShowcase from "./pages/admin/ComponentShowcase";
+
+// Trader Dashboard
 import TraderDashboard from "./pages/TraderDashboard";
 import LiveTrading from "./pages/LiveTrading";
 import LiveTradingNew from "./pages/LiveTradingNew";
@@ -28,21 +34,7 @@ import DeployStrategy from "./pages/DeployStrategy";
 import Performance from "./pages/Performance";
 import RiskAnalysis from "./pages/RiskAnalysis";
 import TradeJournal from "./pages/TradeJournal";
-import AdminSystem from "./pages/AdminSystem";
-import AdminCoreManagement from "./pages/AdminCoreManagement";
-import AdminCoreTest from "./pages/AdminCoreTest";
-import AdminHealth from "./pages/AdminHealth";
-import AdminFeeds from "./pages/AdminFeeds";
-import AdminUsers from "./pages/AdminUsers";
-import AdminAccess from "./pages/AdminAccess";
-import AdminAPIKeys from "./pages/AdminAPIKeys";
-import AdminLogs from "./pages/AdminLogs";
-import AdminRisk from "./pages/AdminRisk";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminSettings from "./pages/AdminSettings";
-import AdminBrokers from "./pages/AdminBrokers";
-import AdminDatabase from "./pages/AdminDatabase";
-import AdminExecution from "./pages/AdminExecution";
+// Old admin pages moved to admin-old/ directory
 import DocsGettingStarted from "./pages/DocsGettingStarted";
 import DocsArchitecture from "./pages/DocsArchitecture";
 import DocsDatabase from "./pages/DocsDatabase";
@@ -50,7 +42,6 @@ import DocsAPI from "./pages/DocsAPI";
 import DocsUserGuide from "./pages/DocsUserGuide";
 import DocsTroubleshooting from "./pages/DocsTroubleshooting";
 import NautilusDemo from "./pages/NautilusDemo";
-import ComponentShowcase from "./pages/admin/ComponentShowcase";
 // import MyStrategies from "./pages/MyStrategies"; // Disabled - has TypeScript errors
 // import QuickBacktest from "./pages/QuickBacktest"; // Disabled - has TypeScript errors
 
@@ -66,7 +57,11 @@ function Router() {
       <Route path={"/strategies"} component={StrategyBuilder} />
       <Route path={"/reports"} component={Reports} />
       <Route path={"/docs"} component={Docs} />
-      <Route path={"/admin"} component={AdminDashboard} />
+      {/* New Admin Routes - 6 Pages */}
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/components-page" component={ComponentsPage} />
+      <Route path="/admin/features" component={FeaturesPage} />
+      <Route path="/admin/components" component={ComponentShowcase} />
       <Route path={"/trader"} component={TraderDashboard} />
       <Route path={"/live"} component={LiveTradingNew} />
       <Route path={"/live-old"} component={LiveTrading} />
@@ -84,22 +79,7 @@ function Router() {
       <Route path={"/risk"} component={RiskAnalysis} />
       <Route path={"/journal"} component={TradeJournal} />
 
-      <Route path={"/admin/system"} component={AdminSystem} />
-      <Route path={"/admin/core"} component={AdminCoreManagement} />
-      <Route path={"/admin/core-test"} component={AdminCoreTest} />
-      <Route path={"/admin/health"} component={AdminHealth} />
-      <Route path={"/admin/feeds"} component={AdminFeeds} />
-      <Route path={"/admin/users"} component={AdminUsers} />
-      <Route path={"/admin/access"} component={AdminAccess} />
-      <Route path={"/admin/api-keys"} component={AdminAPIKeys} />
-      <Route path={"/admin/logs"} component={AdminLogs} />
-      <Route path={"/admin/risk"} component={AdminRisk} />
-      <Route path={"/admin/analytics"} component={AdminAnalytics} />
-      <Route path={"/admin/settings"} component={AdminSettings} />
-      <Route path={"/admin/brokers"} component={AdminBrokers} />
-      <Route path={"/admin/database"} component={AdminDatabase} />
-      <Route path="/admin/execution" component={AdminExecution} />
-      <Route path="/admin/components" component={ComponentShowcase} />
+      {/* Old admin routes removed - pages moved to admin-old/ */}
       <Route path="/admin/docs/getting-started" component={DocsGettingStarted} />
       <Route path={"/admin/docs/architecture"} component={DocsArchitecture} />
       <Route path={"/admin/docs/database"} component={DocsDatabase} />
