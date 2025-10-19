@@ -4,7 +4,8 @@ import StatusBadge, { StatusType } from '../ui/StatusBadge';
 export interface AdapterCardProps {
   name: string;
   type: 'data' | 'execution' | 'both';
-  venue: string;
+  venue?: string;
+  exchange?: string;
   status: StatusType;
   config?: {
     apiKey?: string;
@@ -32,6 +33,7 @@ export const AdapterCard: React.FC<AdapterCardProps> = ({
   name,
   type,
   venue,
+  exchange,
   status,
   config,
   metrics,
@@ -53,7 +55,7 @@ export const AdapterCard: React.FC<AdapterCardProps> = ({
               {typeInfo.label}
             </span>
           </div>
-          <p className="text-sm text-gray-600">Venue: {venue}</p>
+          <p className="text-sm text-gray-600">Venue: {venue || exchange}</p>
         </div>
         <StatusBadge status={status} />
       </div>

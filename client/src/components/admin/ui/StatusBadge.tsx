@@ -13,7 +13,10 @@ export type StatusType =
   | 'error'
   | 'warning'
   | 'success'
-  | 'info';
+  | 'info'
+  | 'connected'
+  | 'disconnected'
+  | 'connecting';
 
 export interface StatusBadgeProps {
   status: StatusType;
@@ -35,6 +38,9 @@ const statusConfig: Record<StatusType, { color: string; bgColor: string; label: 
   warning: { color: 'text-amber-700', bgColor: 'bg-amber-100', label: 'Warning' },
   success: { color: 'text-green-700', bgColor: 'bg-green-100', label: 'Success' },
   info: { color: 'text-blue-700', bgColor: 'bg-blue-100', label: 'Info' },
+  connected: { color: 'text-green-700', bgColor: 'bg-green-100', label: 'Connected' },
+  disconnected: { color: 'text-gray-700', bgColor: 'bg-gray-100', label: 'Disconnected' },
+  connecting: { color: 'text-amber-700', bgColor: 'bg-amber-100', label: 'Connecting' },
 };
 
 const sizeConfig = {

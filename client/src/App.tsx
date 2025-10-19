@@ -11,10 +11,13 @@ import Demo from "./pages/Demo";
 import Docs from "./pages/Docs";
 import StrategyBuilder from "./pages/StrategyBuilder";
 import Reports from "./pages/Reports";
-// New Admin Pages
+// New Admin Pages (6 pages total)
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ComponentsPage from "./pages/admin/ComponentsPage";
 import FeaturesPage from "./pages/admin/FeaturesPage";
+import AdaptersPage from "./pages/admin/AdaptersPage";
+import MonitoringPage from "./pages/admin/MonitoringPage";
+import SettingsPage from "./pages/admin/SettingsPage";
 import ComponentShowcase from "./pages/admin/ComponentShowcase";
 
 // Trader Dashboard
@@ -61,6 +64,9 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/components-page" component={ComponentsPage} />
       <Route path="/admin/features" component={FeaturesPage} />
+      <Route path="/admin/adapters" component={AdaptersPage} />
+      <Route path="/admin/monitoring" component={MonitoringPage} />
+      <Route path="/admin/settings-page" component={SettingsPage} />
       <Route path="/admin/components" component={ComponentShowcase} />
       <Route path={"/trader"} component={TraderDashboard} />
       <Route path={"/live"} component={LiveTradingNew} />
