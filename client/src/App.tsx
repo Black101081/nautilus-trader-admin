@@ -50,6 +50,7 @@ import DocsAPI from "./pages/DocsAPI";
 import DocsUserGuide from "./pages/DocsUserGuide";
 import DocsTroubleshooting from "./pages/DocsTroubleshooting";
 import NautilusDemo from "./pages/NautilusDemo";
+import ComponentShowcase from "./pages/admin/ComponentShowcase";
 // import MyStrategies from "./pages/MyStrategies"; // Disabled - has TypeScript errors
 // import QuickBacktest from "./pages/QuickBacktest"; // Disabled - has TypeScript errors
 
@@ -97,8 +98,9 @@ function Router() {
       <Route path={"/admin/settings"} component={AdminSettings} />
       <Route path={"/admin/brokers"} component={AdminBrokers} />
       <Route path={"/admin/database"} component={AdminDatabase} />
-      <Route path={"/admin/execution"} component={AdminExecution} />
-      <Route path={"/admin/docs/getting-started"} component={DocsGettingStarted} />
+      <Route path="/admin/execution" component={AdminExecution} />
+      <Route path="/admin/components" component={ComponentShowcase} />
+      <Route path="/admin/docs/getting-started" component={DocsGettingStarted} />
       <Route path={"/admin/docs/architecture"} component={DocsArchitecture} />
       <Route path={"/admin/docs/database"} component={DocsDatabase} />
       <Route path={"/admin/docs/api"} component={DocsAPI} />

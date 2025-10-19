@@ -1,0 +1,67 @@
+graph TD
+    subgraph "New Admin Dashboard (6 Pages)"
+        A[Dashboard] --> B[Components]
+        A --> C["Features & Services"]
+        A --> D[Adapters]
+        A --> E[Monitoring]
+        A --> F[Settings]
+    end
+
+    subgraph "Dashboard"
+        A1["System Status"]
+        A2["6 Core Components"]
+        A3["Key Metrics"]
+        A4["Emergency Stop"]
+    end
+
+    subgraph "Components"
+        B1["Component List"]
+        B2["Detailed Metrics"]
+        B3["Logs & Controls"]
+    end
+
+    subgraph "Features & Services"
+        C1["64 Features"]
+        C2["126 Services"]
+    end
+
+    subgraph "Adapters"
+        D1["Data Feeds"]
+        D2["Execution Venues"]
+    end
+
+    subgraph "Monitoring"
+        E1[Logs]
+        E2[Metrics]
+        E3[Diagnostics]
+    end
+
+    subgraph "Settings"
+        F1["System Settings"]
+        F2["Users & Access"]
+        F3[Database]
+    end
+
+    A --- A1
+    A --- A2
+    A --- A3
+    A --- A4
+
+    B --- B1
+    B --- B2
+    B --- B3
+
+    C --- C1
+    C --- C2
+
+    D --- D1
+    D --- D2
+
+    E --- E1
+    E --- E2
+    E --- E3
+
+    F --- F1
+    F --- F2
+    F --- F3
+
