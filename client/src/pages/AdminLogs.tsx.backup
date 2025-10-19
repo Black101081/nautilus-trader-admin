@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-import { apiClient } from "@/lib/api-client";
-import type { AuditLog, SystemLog } from "@/types/api";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,30 +13,16 @@ export default function AdminLogs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [logLevel, setLogLevel] = useState("all");
   const [timeRange, setTimeRange] = useState("24h");
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = async () => {
-    try {
-      const [audit, system] = await apiClient.queryMany<[AuditLog[], SystemLog[]]>(
-        'admin.auditTrail',
-        'admin.systemLogs'
-      );
-      setAuditLogs(audit || []);
-      setSystemLogs(system || []);
-    } catch (error) {
-      console.error('Failed to fetch logs:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: auditLogs, refetch } = trpc.admin.auditTrail.useQuery(
+    undefined,
+    { refetchInterval: 5000 }
+  );
 
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const { data: systemLogs } = trpc.admin.systemLogs.useQuery(
+    undefined,
+    { refetchInterval: 5000 }
+  );
 
   const getLogIcon = (level: string) => {
     switch (level.toLowerCase()) {

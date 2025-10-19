@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
-import { apiClient } from "@/lib/api-client";
-import type { User, SystemStats, DatabaseStats } from "@/types/api";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,34 +27,10 @@ import {
 export default function AdminAnalytics() {
   const [timeRange, setTimeRange] = useState("7d");
   const [metricType, setMetricType] = useState("all");
-  const [users, setUsers] = useState<User[]>([]);
-  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
-  const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersData, statsData, dbData] = await apiClient.queryMany<[
-          User[],
-          SystemStats,
-          DatabaseStats
-        ]>(
-          'admin.getAllUsers',
-          'admin.systemStats',
-          'admin.getDatabaseStats'
-        );
-        setUsers(usersData || []);
-        setSystemStats(statsData);
-        setDbStats(dbData);
-      } catch (error) {
-        console.error('Failed to fetch analytics:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const { data: users } = trpc.admin.getAllUsers.useQuery();
+  const { data: systemStats } = trpc.admin.systemStats.useQuery();
+  const { data: dbStats } = trpc.admin.getDatabaseStats.useQuery();
 
   // System-wide analytics data (would come from database aggregations)
   const analytics = {

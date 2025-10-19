@@ -42,7 +42,6 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       maxURLLength: 0, // Disable batching - force individual requests
-      // Note: tRPC hooks are unstable, prefer direct fetch API for new pages
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

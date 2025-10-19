@@ -1,4 +1,6 @@
-import { trpc } from "@/lib/trpc";
+import { useState, useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
+import type { SystemStats, SystemLog, AuditLog, User } from "@/types/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,14 +13,58 @@ import {
 import { Link } from "wouter";
 
 export default function AdminDashboard() {
-  const { data: systemStats, isLoading: statsLoading, refetch: refetchStats } = trpc.admin.systemStats.useQuery();
-  const { data: systemLogs, isLoading: logsLoading } = trpc.admin.systemLogs.useQuery();
-  const { data: auditTrail, isLoading: auditLoading } = trpc.admin.auditTrail.useQuery();
-  const { data: allUsers, isLoading: usersLoading } = trpc.admin.allUsers.useQuery();
+  const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
+  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
+  const [auditTrail, setAuditTrail] = useState<AuditLog[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [stats, logs, audit, users] = await apiClient.queryMany<[
+        SystemStats,
+        SystemLog[],
+        AuditLog[],
+        User[]
+      ]>(
+        'admin.systemStats',
+        'admin.systemLogs',
+        'admin.auditTrail',
+        'admin.allUsers'
+      );
+
+      setSystemStats(stats);
+      setSystemLogs(logs || []);
+      setAuditTrail(audit || []);
+      setAllUsers(users || []);
+    } catch (err: any) {
+      console.error('Failed to fetch dashboard data:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Calculate health status
   const errorCount = systemStats?.systemLogsCount || 0;
   const systemHealth = errorCount === 0 ? "healthy" : errorCount < 10 ? "warning" : "critical";
+
+  const statsLoading = isLoading && !systemStats;
+  const logsLoading = isLoading && systemLogs.length === 0;
+  const auditLoading = isLoading && auditTrail.length === 0;
+  const usersLoading = isLoading && allUsers.length === 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,8 +95,8 @@ export default function AdminDashboard() {
               {systemHealth === "healthy" ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
               System {systemHealth}
             </Badge>
-            <Button variant="outline" size="sm" onClick={() => refetchStats()}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </div>
@@ -58,6 +104,24 @@ export default function AdminDashboard() {
       </header>
 
       <main className="container py-6">
+        {/* Error State */}
+        {error && (
+          <Card className="mb-6 border-red-500">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3 text-red-500">
+                <AlertTriangle className="h-5 w-5" />
+                <div>
+                  <p className="font-semibold">Failed to load dashboard data</p>
+                  <p className="text-sm">{error}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={fetchData} className="ml-auto">
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* System Overview Dashboard */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold mb-4">System Overview</h2>
@@ -99,149 +163,67 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
-                  {statsLoading ? "..." : (systemStats?.totalBacktests || 0)}
+                  {statsLoading ? "..." : (systemStats?.activeConnections || 0)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Total backtests executed
+                  Active connections
                 </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">System Health</CardTitle>
-                <AlertTriangle className={`h-4 w-4 ${errorCount === 0 ? "text-green-500" : "text-destructive"}`} />
+                <CardTitle className="text-sm font-medium">System Alerts</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className={`text-3xl font-bold ${errorCount === 0 ? "text-green-500" : "text-destructive"}`}>
+                <div className="text-3xl font-bold">
                   {statsLoading ? "..." : errorCount}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Error events logged
+                  Unresolved issues
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Management Tabs */}
-        <Tabs defaultValue="users" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto">
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="h-4 w-4" />
-              User Management
-            </TabsTrigger>
-            <TabsTrigger value="monitoring" className="gap-2">
-              <Activity className="h-4 w-4" />
-              System Monitoring
-            </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-2">
-              <Shield className="h-4 w-4" />
-              Audit & Security
-            </TabsTrigger>
+        {/* Tabbed Content */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="audit">Audit & Security</TabsTrigger>
           </TabsList>
 
-          {/* User Management Tab */}
-          <TabsContent value="users" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Registered Users</CardTitle>
-                    <CardDescription>Manage user accounts and permissions</CardDescription>
-                  </div>
-                  <Button size="sm">
-                    <Users className="h-4 w-4 mr-2" />
-                    Add User
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {usersLoading ? (
-                  <div className="text-center py-12">
-                    <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Loading users...</p>
-                  </div>
-                ) : !allUsers || allUsers.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No users registered yet</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Last Active</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {allUsers.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <div className="font-medium">{user.name || "Unnamed User"}</div>
-                            <div className="text-xs text-muted-foreground">{user.loginMethod || "N/A"}</div>
-                          </TableCell>
-                          <TableCell>{user.email || "No email"}</TableCell>
-                          <TableCell>
-                            <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-                              {user.role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="gap-1">
-                              <CheckCircle className="h-3 w-3 text-green-500" />
-                              Active
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {user.lastSignedIn
-                              ? new Date(user.lastSignedIn).toLocaleString()
-                              : "Never"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
-                              <Settings className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* System Monitoring Tab */}
-          <TabsContent value="monitoring" className="space-y-4">
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Database className="h-5 w-5" />
-                    Database Status
+                    System Resources
                   </CardTitle>
+                  <CardDescription>Current resource utilization</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Connection</span>
-                    <Badge variant="default" className="gap-1">
-                      <CheckCircle className="h-3 w-3" />
-                      Connected
-                    </Badge>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">CPU Usage</span>
+                    <span className="font-mono text-sm">{systemStats?.cpuUsage || 0}%</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total Records</span>
-                    <span className="font-mono text-sm">{(systemStats?.totalBacktests || 0) + (systemStats?.totalStrategies || 0)}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Memory Usage</span>
+                    <span className="font-mono text-sm">{systemStats?.memoryUsage || 0}%</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Active Connections</span>
-                    <span className="font-mono text-sm">{allUsers?.length || 0}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Disk Usage</span>
+                    <span className="font-mono text-sm">{systemStats?.diskUsage || 0}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Active Connections</span>
+                    <span className="font-mono text-sm">{systemStats?.activeConnections || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -250,21 +232,26 @@ export default function AdminDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Activity className="h-5 w-5" />
-                    Trading Activity
+                    Platform Statistics
                   </CardTitle>
+                  <CardDescription>Key platform metrics</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Live Trades</span>
-                    <span className="font-mono text-sm">{systemStats?.totalLiveTrades || 0}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total Users</span>
+                    <span className="font-mono text-sm">{allUsers?.length || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Open Positions</span>
-                    <span className="font-mono text-sm">{systemStats?.openPositions || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Active Strategies</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total Strategies</span>
                     <span className="font-mono text-sm">{systemStats?.totalStrategies || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Total Backtests</span>
+                    <span className="font-mono text-sm">{systemStats?.totalBacktests || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">System Logs</span>
+                    <span className="font-mono text-sm">{systemStats?.systemLogsCount || 0}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -305,15 +292,120 @@ export default function AdminDashboard() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{log.message}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            {log.category && (
-                              <span className="text-xs text-muted-foreground">{log.category}</span>
+                            {log.source && (
+                              <span className="text-xs text-muted-foreground">{log.source}</span>
                             )}
                             <span className="text-xs text-muted-foreground">
-                              {log.createdAt
-                                ? new Date(log.createdAt).toLocaleString()
+                              {log.timestamp
+                                ? new Date(log.timestamp).toLocaleString()
                                 : "Unknown time"}
                             </span>
                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Users Tab */}
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Registered Users
+                </CardTitle>
+                <CardDescription>All platform users and their status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {usersLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading users...</div>
+                ) : !allUsers || allUsers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No users found</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Username</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Last Login</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.username}</TableCell>
+                          <TableCell className="text-sm">{user.email || "N/A"}</TableCell>
+                          <TableCell>
+                            <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                              {user.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={user.is_active ? "default" : "destructive"}>
+                              {user.is_active ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {user.last_login
+                              ? new Date(user.last_login).toLocaleString()
+                              : "Never"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  System Activity Log
+                </CardTitle>
+                <CardDescription>Real-time system events and notifications</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {logsLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading activity...</div>
+                ) : !systemLogs || systemLogs.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No activity logged</div>
+                ) : (
+                  <div className="space-y-2">
+                    {systemLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-start gap-3 p-3 rounded-lg border border-border/40"
+                      >
+                        <Badge
+                          variant={
+                            log.level === "critical" || log.level === "error"
+                              ? "destructive"
+                              : log.level === "warning"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {log.level}
+                        </Badge>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{log.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {log.source && `${log.source} • `}
+                            {log.timestamp
+                              ? new Date(log.timestamp).toLocaleString()
+                              : "Unknown time"}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -353,16 +445,16 @@ export default function AdminDashboard() {
                       {auditTrail.slice(0, 15).map((record) => (
                         <TableRow key={record.id}>
                           <TableCell className="text-sm">
-                            {record.createdAt
-                              ? new Date(record.createdAt).toLocaleString()
+                            {record.timestamp
+                              ? new Date(record.timestamp).toLocaleString()
                               : "Unknown"}
                           </TableCell>
-                          <TableCell className="font-mono text-xs">{record.userId.slice(0, 8)}...</TableCell>
+                          <TableCell className="font-medium">{record.username}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{record.action}</Badge>
                           </TableCell>
                           <TableCell className="text-sm">{record.resource || "N/A"}</TableCell>
-                          <TableCell className="font-mono text-xs">{record.ipAddress || "N/A"}</TableCell>
+                          <TableCell className="font-mono text-xs">{record.ip_address || "N/A"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
