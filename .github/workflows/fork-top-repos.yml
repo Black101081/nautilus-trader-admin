@@ -24,36 +24,64 @@ jobs:
         run: |
           echo "Fetching top 10 most starred GitHub repositories..."
           
-          # Get top 10 repositories sorted by stars
-          REPOS=$(curl -s "https://api.github.com/search/repositories?q=stars:>1&sort=stars&order=desc&per_page=10" | jq -r '.items[] | "\(.full_name)"')
+          # Get top 10 repositories sorted by stars (with authentication for higher rate limits)
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/search_response.json \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/search/repositories?q=stars:>1&sort=stars&order=desc&per_page=10")
           
-          echo "Top 10 repositories found:"
-          echo "$REPOS"
+          SEARCH_RESPONSE=$(cat /tmp/search_response.json)
+          
+          # Check HTTP status code
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            ERROR_MSG=$(echo "$SEARCH_RESPONSE" | jq -r '.message // "HTTP error"')
+            echo "❌ Failed to fetch repositories (HTTP $HTTP_CODE): $ERROR_MSG"
+            exit 1
+          fi
+          
+          # Check if the API returned valid data
+          REPO_COUNT=$(echo "$SEARCH_RESPONSE" | jq -r '.items | length')
+          if [ -z "$REPO_COUNT" ] || [ "$REPO_COUNT" -eq 0 ]; then
+            echo "❌ No repositories found or API error occurred"
+            exit 1
+          fi
+          
+          echo "Top $REPO_COUNT repositories found:"
+          echo "$SEARCH_RESPONSE" | jq -r '.items[].full_name'
           echo ""
           
-          # Fork each repository
-          for repo in $REPOS; do
+          # Fork each repository using jq to iterate safely
+          echo "$SEARCH_RESPONSE" | jq -r '.items[].full_name' | while IFS= read -r repo; do
+            [ -z "$repo" ] && continue
+            
             echo "Attempting to fork: $repo"
             
-            # Check if already forked by checking if the repo exists in user's account
-            REPO_NAME=$(echo "$repo" | cut -d'/' -f2)
-            
             # Try to fork the repository
-            RESPONSE=$(curl -s -X POST \
+            FORK_HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/fork_response.json -X POST \
               -H "Authorization: token $GH_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/$repo/forks")
             
-            # Check if fork was successful
-            if echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
+            RESPONSE=$(cat /tmp/fork_response.json)
+            
+            # Check if fork was successful (HTTP 202 Accepted or has id and html_url)
+            if [ "$FORK_HTTP_CODE" -eq 202 ] || (echo "$RESPONSE" | jq -e '.id' > /dev/null 2>&1 && echo "$RESPONSE" | jq -e '.html_url' > /dev/null 2>&1); then
               FORK_URL=$(echo "$RESPONSE" | jq -r '.html_url')
               echo "✅ Successfully forked $repo"
               echo "   Fork URL: $FORK_URL"
-            elif echo "$RESPONSE" | jq -e '.message' | grep -q "already exists"; then
-              echo "ℹ️  Fork of $repo already exists in your account"
             else
-              ERROR_MSG=$(echo "$RESPONSE" | jq -r '.message // "Unknown error"')
-              echo "❌ Failed to fork $repo: $ERROR_MSG"
+              # Extract error information
+              ERROR_MSG=$(echo "$RESPONSE" | jq -r '.message // empty')
+              ERRORS=$(echo "$RESPONSE" | jq -r '[.errors[]?.message] | join("; ")' 2>/dev/null)
+              
+              if echo "$ERRORS" | grep -qi "name already exists" || echo "$ERROR_MSG" | grep -qi "already exists"; then
+                echo "ℹ️  Fork of $repo already exists in your account"
+              elif [ -n "$ERROR_MSG" ]; then
+                echo "❌ Failed to fork $repo (HTTP $FORK_HTTP_CODE): $ERROR_MSG"
+                [ -n "$ERRORS" ] && echo "   Details: $ERRORS"
+              else
+                echo "❌ Failed to fork $repo (HTTP $FORK_HTTP_CODE): Unknown error"
+              fi
             fi
             
             echo ""
