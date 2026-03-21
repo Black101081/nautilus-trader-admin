@@ -119,3 +119,8 @@ backups/
 
 # Nautilus data
 nautilus-data/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
